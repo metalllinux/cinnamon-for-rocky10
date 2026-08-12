@@ -4,20 +4,22 @@ Bringing the Cinnamon Desktop to Rocky Linux 10.
 
 ## Status
 
-**Build date:** 2026-08-11
+**Build date:** 2026-08-12
 **Target:** Rocky Linux 10.2 (Red Quartz)
 
 | Component | Version | Status |
 |-----------|---------|--------|
-| cinnamon-desktop | 6.7.2 | Built, RPMs available |
-| cjs | 6.4.0 | Built, installed |
-| muffin | 6.7.4 | Built, installed |
-| xapps | — | Pending |
-| cinnamon-session | — | Pending |
-| cinnamon-settings-daemon | — | Pending |
-| cinnamon-control-center | — | Pending |
-| nemo | — | Pending |
-| cinnamon | — | Pending |
+| cinnamon-desktop | 6.7.2 | ✅ Built, RPMs available |
+| cjs | 6.4.0 | ✅ Built, RPMs available |
+| muffin | 6.7.4 | ✅ Built, RPMs available (+clutter, +cogl) |
+| xapps | 3.3.3 | ✅ Built, RPMs available (+lib) |
+| cinnamon-session | 6.7.3 | ✅ Built, RPMs available |
+| cinnamon-settings-daemon | 6.7.2 | ✅ Built, RPMs available |
+| cinnamon-control-center | 6.7.2 | ✅ Built, RPMs available |
+| nemo | 6.7.4 | ✅ Built, RPMs available |
+| cinnamon | 6.7.4 | ✅ Built, RPMs available |
+
+**All 10 packages built successfully.** RPMs in `rpms/` directory.
 
 ## Build notes
 

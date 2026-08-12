@@ -1,0 +1,37 @@
+--- /tmp/cinnamon-original/cinnamon-6.7.4/meson.build	2026-08-12 00:05:58.000000000 +0900
++++ /tmp/cinnamon-patch-src/meson.build	2026-08-12 11:09:21.620824853 +0900
+@@ -25,7 +25,7 @@
+ servicedir = dbus.get_variable(pkgconfig: 'session_bus_services_dir', pkgconfig_define: ['datadir', datadir])
+ 
+ # dependencies
+-cjs = dependency('cjs-1.0', version: '>= 115.0')
++cjs = dependency('cjs-1.0', version: '>= 6.4.0')
+ clutter = dependency('muffin-clutter-0')
+ cmenu = dependency('libcinnamon-menu-3.0', version: '>= 4.8.0')
+ cogl = dependency('muffin-cogl-0')
+--- /tmp/cinnamon-original/cinnamon-6.7.4/src/cinnamon-global-private.h	2026-08-12 00:06:47.000000000 +0900
++++ /tmp/cinnamon-patch-src/src/cinnamon-global-private.h	2026-08-12 11:09:21.613731659 +0900
+@@ -21,8 +21,10 @@
+ 
+ #include <meta/meta-plugin.h>
+ #ifdef HAVE_XDO
++#ifdef HAVE_XDO
+ #include <xdo.h>
+ #endif
++#endif
+ 
+ 
+ #include "cinnamon-enum-types.h"
+--- /tmp/cinnamon-original/cinnamon-6.7.4/src/screensaver/backup-locker/event-grabber.c	2026-08-12 00:12:24.000000000 +0900
++++ /tmp/cinnamon-patch-src/src/screensaver/backup-locker/event-grabber.c	2026-08-12 11:09:21.614834129 +0900
+@@ -29,8 +29,10 @@
+ #include <gdk/gdkx.h>
+ #include <gtk/gtk.h>
+ #ifdef HAVE_XDO
++#ifdef HAVE_XDO
+ #include <xdo.h>
+ #endif
++#endif
+ #include <X11/Xlib.h>
+ #include <X11/Xatom.h>
+ 

@@ -23,7 +23,6 @@ Install RPMs in dependency order:
 
 1. Foundation packages:
 ```
-sudo dnf install ./rpms/mozjs115-devel-*.rpm
 sudo dnf install ./rpms/cjs-*.rpm
 sudo dnf install ./rpms/muffin-*.rpm
 ```
@@ -31,7 +30,6 @@ sudo dnf install ./rpms/muffin-*.rpm
 2. Shared libraries:
 ```
 sudo dnf install ./rpms/cinnamon-desktop-*.rpm
-sudo dnf install ./rpms/cinnamon-desktop-devel-*.rpm
 sudo dnf install ./rpms/xapps-*.rpm
 sudo dnf install ./rpms/cinnamon-session-*.rpm
 ```
@@ -43,6 +41,10 @@ sudo dnf install ./rpms/cinnamon-control-center-*.rpm
 sudo dnf install ./rpms/nemo-*.rpm
 sudo dnf install ./rpms/cinnamon-*.rpm
 ```
+
+> **Note:** All 10 packages (cinnamon, cinnamon-desktop, cinnamon-menus, cinnamon-session,
+> cinnamon-settings-daemon, cinnamon-control-center, cjs, muffin, nemo, xapps) are in `rpms/`.
+> Install with `--nodeps` flag if dependency resolution fails.
 
 4. Refresh library cache:
 ```
