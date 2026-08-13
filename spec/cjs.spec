@@ -6,6 +6,7 @@ Summary:        The Cinnamon JavaScript interpreter
 License:        MIT and LGPL-2.0-or-later
 URL:            https://github.com/linuxmint/cjs
 Source0:        https://github.com/linuxmint/cjs/archive/refs/tags/%{version}.tar.gz#/cjs-%{version}.tar.gz
+# SHA256: a2aef115c4a43027e722cc1e4b68cbdd7334d79a36d1b101c6b788b130a1ea23
 
 BuildRequires:  meson >= 0.56.0
 BuildRequires:  ninja-build
@@ -47,27 +48,26 @@ Development files for %{name}.
     -Dinstalled_tests=false \
     -Dskip_gtk_tests=false \
     -Dskip_dbus_tests=false
-%ninja_build
+ninja -v -C redhat-linux-build -j2
 
 %install
-%ninja_install
-%find_lang %{name}
+DESTDIR=%{buildroot} ninja -C redhat-linux-build install -v
 
-%files -f %{name}.lang
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
+
+%files
 %{_bindir}/cjs-console
 %{_bindir}/cjs
 %{_libdir}/libcjs.so.*
-%{_datadir}/cjs-1.0
-%{_datadir}/installed-tests/cjs-1.0
 %dir %{_libdir}/cjs
-%{_libdir}/cjs/*.typelib
+%{_libdir}/cjs/girepository-1.0/
+%{_datadir}/cjs-1.0
 
 %files devel
 %{_libdir}/libcjs.so
 %{_libdir}/pkgconfig/cjs-1.0.pc
 %{_includedir}/cjs-1.0
-%{_libdir}/cjs/*.a
-%{_libdir}/cjs/*.la
 
 %changelog
 * Sun Aug 09 2026 Team Chaotix <chaotix@metallinux.dev> - 6.4.0-1

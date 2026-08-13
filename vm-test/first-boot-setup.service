@@ -1,0 +1,11 @@
+[Unit]
+Description=First boot setup for Cinnamon test VM
+ConditionPathExists=!/var/run/first-boot-done
+
+[Service]
+Type=oneshot
+ExecStart=/etc/first-boot-setup.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

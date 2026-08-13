@@ -1,0 +1,17 @@
+#cloud-config
+# Root accessed via SSH key injection only — no password authentication
+ssh_pwauth: False
+timezone: UTC
+disable_root: false
+bootcmd:
+  - systemctl enable sshd
+  - systemctl start sshd
+  - systemctl stop firewalld
+  - systemctl disable firewalld
+runcmd:
+  - systemctl enable sshd
+  - systemctl start sshd
+  - systemctl stop firewalld
+  - systemctl disable firewalld
+  - sed -i 's/^PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+  - systemctl restart sshd
