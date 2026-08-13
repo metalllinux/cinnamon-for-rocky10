@@ -29,12 +29,6 @@ SYSTEM_DEPS=(
     "gsettings-desktop-schemas"
 )
 
-# SSH helper — uses key-based auth.
-ssh_cmd() {
-    local target="$1"; shift
-    ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i "${SSH_KEY}" "${VM_USER}@${target}" "$@"
-}
-
 log() { printf '[install] %s\n' "$*"; }
 
 die() { printf '[install] ERROR: %s\n' "$*" >&2; exit 1; }

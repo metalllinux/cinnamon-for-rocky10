@@ -18,7 +18,7 @@ sudo dnf install -y gtk3 glib2 graphene libX11 libXrandr libXdamage \
   pipewire libdrm pulseaudio-libs libcanberra systemd gobject-introspection \
   iso-codes xkeyboard-config cairo pango harfbuzz gdk-pixbuf2 \
   libxml2 dbus atk at-spi2-atk fontconfig mesa-libEGL json-glib \
-  libstartup-notification readline
+  startup-notification readline
 ```
 
 ## Quick install

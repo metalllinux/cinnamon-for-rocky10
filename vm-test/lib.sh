@@ -2,12 +2,12 @@
 # lib.sh — Shared constants and functions for the Cinnamon VM test harness
 # Part of TASK-0003 VM testing harness for Cinnamon RPMs.
 #
-# Source this file from provision-vm.sh, run-tests.sh, and verify-binaries.sh.
-# Do not execute directly.
+# Source this file from all test scripts. Do not execute directly.
 #
 # Addresses:
 #   - Omega MEDIUM: VM_PASSWORD duplicated across 3 files (extracted to single source)
 #   - Shadow should-fix: get_vm_ip duplicated across 3 files (extracted to shared lib)
+#   - Omega low: ssh_cmd duplicated across 5 files (TASK-0005 — extracted to shared lib)
 
 # --- Guard: must be sourced, not executed ---
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
@@ -27,6 +27,14 @@ PROJECT_DIR="${HOME}/Linux/projects/cinnamon-for-rocky10"
 VM_TEST_DIR="${PROJECT_DIR}/vm-test"
 
 # --- Shared functions ---
+
+# SSH helper — uses key-based auth. Shared by all test scripts.
+# ConnectTimeout=60 to accommodate longer-running operations like binary
+# verification and version checks that may time out with the default 30s.
+ssh_cmd() {
+    local target="$1"; shift
+    ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -i "${SSH_KEY}" "${VM_USER}@${target}" "$@"
+}
 
 # Resolve VM IP from libvirt DHCP leases using MAC-based lookup.
 # Returns the IP address on stdout, empty string if not found.

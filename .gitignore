@@ -1,0 +1,7 @@
+# VM test harness artifacts
+vm-test/images/
+vm-test/results/
+
+# Source tarballs (rebuilt from spec)
+src/*.tar.gz
+src/*.tar.xz

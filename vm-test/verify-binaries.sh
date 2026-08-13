@@ -46,12 +46,6 @@ LIB_CHECKS=(
     "/usr/lib64/libxapp.so*|xapp library"
 )
 
-# SSH helper — uses key-based auth.
-ssh_cmd() {
-    local target="$1"; shift
-    ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -i "${SSH_KEY}" "${VM_USER}@${target}" "$@"
-}
-
 log() { printf '[verify] %s\n' "$*"; }
 
 die() { printf '[verify] ERROR: %s\n' "$*" >&2; exit 1; }
