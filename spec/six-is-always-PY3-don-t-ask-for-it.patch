@@ -1,0 +1,28 @@
+From ab319d285ca88474ccbf941407abbdc7f24e6d42 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Franti=C5=A1ek=20Zatloukal?= <fzatlouk@redhat.com>
+Date: Sun, 16 Jul 2023 11:36:00 +0200
+Subject: [PATCH] six is always PY3, don't ask for it
+
+---
+ js/src/tests/lib/manifest.py | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/js/src/tests/lib/manifest.py b/js/src/tests/lib/manifest.py
+index 79c42a2..cbc5d53 100644
+--- a/js/src/tests/lib/manifest.py
++++ b/js/src/tests/lib/manifest.py
+@@ -460,10 +460,7 @@ def _parse_test_header(fullpath, testcase, xul_tester):
+     This looks a bit weird.  The reason is that it needs to be efficient, since
+     it has to be done on every test
+     """
+-    if six.PY3:
+-        fp = open(fullpath, encoding="utf-8")
+-    else:
+-        fp = open(fullpath)
++    fp = open(fullpath, encoding="utf-8")
+     try:
+         buf = fp.read(512)
+     finally:
+-- 
+2.41.0
+
