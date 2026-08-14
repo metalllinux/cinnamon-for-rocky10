@@ -5,3 +5,7 @@ vm-test/results/
 # Source tarballs (rebuilt from spec)
 src/*.tar.gz
 src/*.tar.xz
+
+# Generated repository metadata
+rpms/repodata/
+rpms/.repodata/
