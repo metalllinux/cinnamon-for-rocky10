@@ -2,11 +2,117 @@
 
 ## Current status
 
-**All 10 base packages install cleanly.** See the README for version details and test results.
+**All 14 base packages install cleanly.** See the README for version details and test results.
+
+## Quick start (recommended)
+
+The recommended installation method uses a local DNF repository. This approach lets dnf manage
+dependencies and future updates automatically.
+
+1. Clone or copy the project to any directory on the target machine.
+
+2. Run the repository setup script. The script installs `createrepo_c` if missing, generates
+   repository metadata, and installs a `.repo` file to `/etc/yum.repos.d/`:
+
+```
+sudo ./repo-setup/setup-repo.sh
+```
+
+If the script is not in the current directory, point it at the project root:
+
+```
+sudo ./repo-setup/setup-repo.sh /path/to/cinnamon-for-rocky10
+```
+
+3. Install Cinnamon and its core components:
+
+```
+sudo dnf install cinnamon
+```
+
+This installs the shell and its hard dependencies (cjs, muffin, muffin-clutter,
+muffin-cogl, cinnamon-desktop, xapps-lib, cinnamon-menus, mozjs115). Five additional
+packages are not hard dependencies and must be installed separately:
+
+```
+sudo dnf install cinnamon-session cinnamon-settings-daemon cinnamon-control-center \
+  nemo mozjs115-devel
+```
+
+Without these, the settings panel, session manager, and file manager will be missing.
+
+4. Refresh the library cache:
+
+```
+sudo ldconfig
+```
+
+The setup script handles all prerequisites: enabling the CRB repository and installing
+`createrepo_c`. It also validates that the repository is readable before finishing.
+
+## Manual repository setup
+
+If you prefer not to use the setup script, follow these steps:
+
+1. Install createrepo_c:
+```
+sudo dnf install -y createrepo_c
+```
+
+2. Generate repository metadata in the rpms/ directory:
+```
+sudo createrepo_c /path/to/cinnamon-for-rocky10/rpms/
+```
+
+3. Create `/etc/yum.repos.d/cinnamon-rocky10.repo` with the following content, replacing the
+   baseurl with the absolute path to your rpms/ directory:
+```
+[cinnamon-rocky10]
+name=Cinnamon for Rocky Linux 10 (local)
+baseurl=file:///path/to/cinnamon-for-rocky10/rpms/
+enabled=1
+gpgcheck=0
+metadata_expire=0
+module_hotfixes=0
+keepcache=0
+```
+
+4. Enable CRB:
+```
+sudo dnf config-manager --set-enabled crb
+```
+
+5. Install Cinnamon and its core components:
+```
+sudo dnf install cinnamon
+```
+
+6. Install remaining components (settings panel, session manager, file manager):
+```
+sudo dnf install cinnamon-session cinnamon-settings-daemon cinnamon-control-center \
+  nemo mozjs115-devel
+```
+
+7. Refresh library cache:
+```
+sudo ldconfig
+```
+
+## Direct RPM install (fallback)
+
+Without a repository, dnf still resolves dependency order when given all RPMs at once:
+```
+sudo dnf install ./rpms/*.rpm
+```
+
+This method works but skips repository features like `dnf remove` tracking and update
+notifications. Use it only if the repository method is not feasible.
 
 ## Prerequisites
 
-1. Enable CRB (CodeReady Builder) repository:
+Before installing Cinnamon, enable the CRB repository and install base dependencies:
+
+1. Enable CRB (CodeReady Builder):
 ```
 sudo dnf config-manager --set-enabled crb
 ```
@@ -21,49 +127,8 @@ sudo dnf install -y gtk3 glib2 graphene libX11 libXrandr libXdamage \
   startup-notification readline
 ```
 
-## Quick install
-
-All RPMs install in a single batch. dnf resolves the dependency order automatically:
-```
-sudo dnf install ./rpms/*.rpm
-```
-
-## Step-by-step install
-
-If you prefer to install in dependency order:
-
-1. Foundation libraries:
-```
-sudo dnf install ./rpms/mozjs115-115.29.0-1.el10.x86_64.rpm
-sudo dnf install ./rpms/mozjs115-devel-115.29.0-1.el10.x86_64.rpm
-sudo dnf install ./rpms/cinnamon-desktop-*.rpm
-sudo dnf install ./rpms/xapps-lib-*.rpm
-sudo dnf install ./rpms/cinnamon-menus-*.rpm
-```
-
-2. JavaScript engine and compositor:
-```
-sudo dnf install ./rpms/cjs-*.rpm
-sudo dnf install ./rpms/muffin-*.rpm
-```
-
-3. Session and settings:
-```
-sudo dnf install ./rpms/cinnamon-session-*.rpm
-sudo dnf install ./rpms/cinnamon-settings-daemon-*.rpm
-```
-
-4. Desktop components:
-```
-sudo dnf install ./rpms/cinnamon-control-center-*.rpm
-sudo dnf install ./rpms/nemo-*.rpm
-sudo dnf install ./rpms/cinnamon-*.rpm
-```
-
-5. Refresh library cache:
-```
-sudo ldconfig
-```
+The setup script enables CRB automatically. The base dependency list is required regardless of
+installation method.
 
 ## Installed packages
 
@@ -111,6 +176,18 @@ Temporarily set permissive mode:
 ```
 sudo setenforce 0
 ```
+
+Once troubleshooting is complete, restore enforcing mode:
+```
+sudo setenforce 1
+```
+
+### Repository not found
+
+If dnf reports the cinnamon-rocky10 repository is not found:
+- Verify the .repo file exists at `/etc/yum.repos.d/cinnamon-rocky10.repo`.
+- Check that the `baseurl` path in the .repo file points to a directory containing `repodata/`.
+- Run `dnf makecache` to refresh repository metadata.
 
 ### Missing libraries
 
