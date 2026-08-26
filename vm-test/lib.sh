@@ -20,7 +20,10 @@ export LIBVIRT_DEFAULT_URI=qemu:///system
 
 # --- Shared constants ---
 
-VM_NAME="cinnamon-test-vm"
+# VM_NAME honors a pre-set environment value so a caller (e.g.
+# test-gdm-login.sh) can provision under its own name. Scripts that
+# source this file without exporting VM_NAME keep the default.
+VM_NAME="${VM_NAME:-cinnamon-test-vm}"
 VM_USER="root"
 SSH_KEY="${HOME}/.ssh/cinnamon-test-key"
 PROJECT_DIR="${HOME}/Linux/projects/cinnamon-for-rocky10"

@@ -2,6 +2,9 @@
 vm-test/images/
 vm-test/results/
 
+# Python bytecode
+__pycache__/
+
 # Source tarballs (rebuilt from spec)
 src/*.tar.gz
 src/*.tar.xz
