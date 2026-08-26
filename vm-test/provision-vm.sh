@@ -2,8 +2,15 @@
 # provision-vm.sh — W1: Provision a Rocky Linux 10.2 VM from cloud image
 # Part of TASK-0003 VM testing harness for Cinnamon RPMs.
 #
-# Usage: provision-vm.sh [--destroy]
-#   --destroy  : destroy existing VM before provisioning (idempotent)
+# Usage: provision-vm.sh [--destroy] [--destroy-only] [--graphics <type>] [--name <vm-name>]
+#   --destroy       : destroy existing VM before provisioning (idempotent)
+#   --destroy-only  : destroy the existing VM and exit; do not provision
+#                     (teardown path, TASK-0008)
+#   --graphics type : virt-install graphics type (default: none).
+#                     Use "vnc" to attach to the console (TASK-0008 item 2:
+#                     GDM greeter observation). The VNC display is reported
+#                     via `virsh vncdisplay <vm>` after launch.
+#   --name name     : VM name (default: cinnamon-test-vm from lib.sh)
 #
 # Uses virt-customize to configure the cloud image (root password, SSH, firewall)
 # before launching the VM. No cloud-init needed.
@@ -75,9 +82,55 @@ wait_for_ssh() {
 
 main() {
     local do_destroy=false
-    [ "${1:-}" = "--destroy" ] && do_destroy=true
+    local destroy_only=false
+    local graphics="none"
+    local vm_name_override=""
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --destroy)
+                do_destroy=true
+                shift
+                ;;
+            --destroy-only)
+                destroy_only=true
+                shift
+                ;;
+            --graphics)
+                graphics="${2:-}"
+                [ -n "$graphics" ] || die "--graphics requires a value (none|vnc|spice)"
+                shift 2
+                ;;
+            --name)
+                vm_name_override="${2:-}"
+                [ -n "$vm_name_override" ] || die "--name requires a value"
+                shift 2
+                ;;
+            *)
+                die "Unknown option: $1 (see header for usage)"
+                ;;
+        esac
+    done
+
+    # Apply the name override after lib.sh has been sourced.
+    if [ -n "$vm_name_override" ]; then
+        VM_NAME="$vm_name_override"
+        DISK_PATH="${IMG_DIR}/${VM_NAME}.qcow2"
+    fi
 
     check_prereqs
+
+    # --destroy-only: tear down and stop. Idempotent: a missing VM is a
+    # success (the teardown path wants "gone", not "error").
+    if $destroy_only; then
+        if virsh domstate "${VM_NAME}" >/dev/null 2>&1; then
+            destroy_vm
+        else
+            log "VM '${VM_NAME}' not present; nothing to destroy."
+            rm -f "$DISK_PATH"
+        fi
+        exit 0
+    fi
 
     if virsh domstate "${VM_NAME}" >/dev/null 2>&1; then
         if $do_destroy; then
@@ -121,14 +174,16 @@ main() {
         2>&1 | tee "${IMG_DIR}/customize.log"
 
     # Create VM using virt-install --import
-    log "Creating VM..."
+    # $graphics is "none" by default; "vnc" gives the agent a console
+    # channel for greeter observation (TASK-0008 item 2).
+    log "Creating VM (graphics: ${graphics})..."
     virt-install \
         --name "${VM_NAME}" \
         --vcpus "${VCPUS}" \
         --memory "${MEMORY}" \
         --import \
         --disk "path=${DISK_PATH},format=qcow2" \
-        --graphics none \
+        --graphics "${graphics}" \
         --network network=default \
         --os-variant rhel10.0 \
         --wait 0 \
@@ -136,6 +191,13 @@ main() {
 
     log "VM launched from cloud image."
     log "Watch progress with: virsh console ${VM_NAME}"
+    if [ "$graphics" = "vnc" ]; then
+        # libvirt assigns the first free VNC display; report it so the
+        # operator/agent can connect (e.g. a VNC client to :N on the host).
+        local vnc_display
+        vnc_display=$(virsh vncdisplay "${VM_NAME}" 2>/dev/null || true)
+        [ -n "$vnc_display" ] && log "VNC display: ${vnc_display} (connect to host:${vnc_display#*:})"
+    fi
 
     # Wait for the VM to get an IP
     sleep 10
