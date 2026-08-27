@@ -263,37 +263,69 @@ gdm_click_visible() {
 
 # --- Session selection ---
 
-# Select session $1 in the GDM greeter session selector.
+# Map the harness session shorthand to the greeter's session entry
+# name (the .desktop Name= value the Login Options menu lists).
+# Anything not listed here selects no session (the greeter's default,
+# GNOME).
+gdm_session_entry() {
+    case "$1" in
+        cinnamon) echo "Cinnamon" ;;
+        cinnamon-wayland) echo "Cinnamon (Wayland)" ;;
+        *) echo "" ;;
+    esac
+}
+
+# The greeter shows a "Caps lock is on" warning label while caps lock
+# is set. The ukey device is created fresh per invocation (its
+# modifier state always starts off), so the typed password is
+# unaffected; the warning is display hygiene for the evidence capture
+# (a stray "Caps lock is on" in the failure-dialog a11y dump is a
+# surprise to read). Toggle until the label is gone, 3 tries max.
+gdm_caps_lock_off() {
+    local i
+    for i in 1 2 3; do
+        $A11Y waitvis "Caps lock is on" 2 >/dev/null 2>&1 || return 0
+        gdm_key Caps_Lock
+        sleep 1
+    done
+    return 0
+}
+
+# Select session $1 in the GDM greeter session selector. $1 is the
+# greeter's session entry name (e.g. "Cinnamon (Wayland)").
 #
-# Sequence (item 2 observation pass, pinned by a11y-tree + VNC
-# screenshot evidence):
-#   1. Ctrl+Alt+Down opens the session selector (GDM greeter
-#      shortcut, documented GDM behavior).
-#   2. The entry is found in the greeter's a11y tree by name ("Cinnamon"
-#      exact match preferred over substrings such as "Cinnamon
-#      (Wayland)") and clicked at its screen-space extents center via
-#      ukey.
-# Returns 0 when the entry was found and clicked, 1 when it was not
-# found in the a11y tree (the caller decides how to proceed; the
-# greeter then logs in with whatever the selector currently holds).
+# Sequence (item 2c-2, pinned by the live gdm-47 Wayland greeter
+# a11y tree, 2026-08-27): the Wayland greeter has no Ctrl+Alt+Down
+# session shortcut (that is X11 GDM behavior; the gdm-47 Wayland
+# greeter is gnome-shell). The selector is the "Login Options" menu
+# button in the bottom-right corner. Its a11y [menu] node is hidden
+# (INT_MIN extents) in the face-list stage and gains on-screen
+# extents once the password stage is up. The menu lists a "Password"
+# item and a "Session Type" item; the available session entries sit
+# under the latter, so "Session Type" is expanded first when the
+# target entry is not directly visible.
+#   1. Click the visible "Login Options" menu button.
+#   2. If the target entry is not visible, click "Session Type".
+#   3. Click the target entry at its screen-space extents center.
+# Returns 0 when the entry was found and clicked, 1 when the
+# "Login Options" button is not visible or the entry is not in the
+# menu (the caller decides how to proceed).
 gdm_select_session() {
     local session="$1"
-    local line x y w h
-    gdm_combo ctrl alt Down
-    sleep 2
-    if line=$($A11Y find "$session" 2>/dev/null); then
-        x=$(cut -f3 <<<"$line")
-        y=$(cut -f4 <<<"$line")
-        w=$(cut -f5 <<<"$line")
-        h=$(cut -f6 <<<"$line")
-        if [ "$w" != "-" ] && [ "$h" != "-" ]; then
-            gdm_abs_click $((x + w / 2)) $((y + h / 2))
-            echo "gdm-drive: clicked session entry '${session}' at $((x + w / 2)),$((y + h / 2))" >&2
-            sleep 1
-            return 0
-        fi
+    gdm_click_visible "Login Options" 15 || {
+        echo "gdm-drive: 'Login Options' menu button not visible (is the password stage up?)" >&2
+        return 1
+    }
+    sleep 1
+    if ! $A11Y waitvis "$session" 5 >/dev/null 2>&1; then
+        gdm_click_visible "Session Type" 10 || true
+        sleep 1
     fi
-    echo "gdm-drive: session entry '${session}' not found in greeter a11y tree" >&2
+    if gdm_click_visible "$session" 15; then
+        sleep 1
+        return 0
+    fi
+    echo "gdm-drive: session entry '${session}' not found in the Login Options menu" >&2
     return 1
 }
 
@@ -308,25 +340,35 @@ gdm_dismiss_errors() {
 # --- Login drive ---
 
 # Full login drive.
-#   $1 user, $2 passfile (in-VM, 0600), $3 session: "cinnamon" selects
-#   the Cinnamon entry; anything else logs in to the default (GNOME)
+#   $1 user, $2 passfile (in-VM, 0600), $3 session: "cinnamon"
+#   selects the Cinnamon entry, "cinnamon-wayland" the Cinnamon
+#   (Wayland) entry; anything else logs in to the default (GNOME)
 #   session.
 #
-# Flow (item 2, attempt 4, pinned by a11y-tree observation on the
-# gdm-47 Wayland greeter):
+# Flow (item 2, attempt 4 face-list observation + item 2c-2 session
+# menu, pinned by a11y-tree evidence on the gdm-47 Wayland greeter):
 #   1. The greeter shows the face list when the user is known (there
 #      is no username field and no "Log In" node in this mode), so
 #      the password dialog is reached by clicking the user's face.
 #   2. Fallback: "Not listed?" opens the username+password dialog;
 #      type the username, Return (the documented GDM username-advance
 #      key).
-#   3. Wait for the password field ("Login code:" label becomes
-#      visible) before typing the password.
-#   4. Session selection (Ctrl+Alt+Down) is only offered from the
-#      login dialog, so it happens after step 3, before the password.
-# Returns: 0 input sent, 3 greeter not reachable / no login surface.
+#   3. Wait for the password entry (a11y role "password text" becomes
+#      visible) before typing the password. (On the gdm-47 Wayland
+#      greeter the "Login code:" label stays hidden in the password
+#      stage — item 2c-2 — so the role, not the label, is the
+#      readiness marker.)
+#   4. Session selection (the Login Options menu) is only offered
+#      from the login dialog, so it happens after step 3, before the
+#      password. When a session is explicitly requested and cannot be
+#      selected, the attempt aborts (return 2) without submitting
+#      credentials: logging in to the default session would test a
+#      different thing and blur the verdict.
+# Returns: 0 input sent, 2 requested session not selectable,
+# 3 greeter not reachable / no login surface.
 gdm_login() {
     local user="$1" passfile="$2" session="$3"
+    local entry
 
     [ -r "$passfile" ] || {
         echo "gdm-drive: cannot read passfile ${passfile}" >&2
@@ -344,19 +386,22 @@ gdm_login() {
         sleep 1
         gdm_key Return
     fi
-    $A11Y waitvis "Login code:" 30 >/dev/null 2>&1 || {
-        echo "gdm-drive: password field did not appear after user selection" >&2
+    $A11Y waitvisrole "password text" 30 >/dev/null 2>&1 || {
+        echo "gdm-drive: password entry did not appear after user selection" >&2
         return 3
     }
     sleep 1
 
-    if [ "$session" = "cinnamon" ]; then
-        gdm_select_session "Cinnamon" || {
-            echo "gdm-drive: continuing without a selected Cinnamon entry (default session will be used)" >&2
+    entry=$(gdm_session_entry "$session")
+    if [ -n "$entry" ]; then
+        gdm_select_session "$entry" || {
+            echo "gdm-drive: requested session '${entry}' not selectable; aborting without credentials" >&2
+            return 2
         }
         sleep 1
     fi
 
+    gdm_caps_lock_off
     gdm_type "$(cat "$passfile")"
     sleep 1
     gdm_key Return
