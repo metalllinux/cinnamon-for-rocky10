@@ -14,8 +14,11 @@
 #   4. Control: log the test user into GNOME, verify by state
 #   5. Install Cinnamon exactly per INSTALL.md (setup-repo.sh + the two
 #      dnf install commands + ldconfig)
-#   6. Attempt the Cinnamon login (session select, credentials, 120s
-#      wait), verify by state, capture evidence on both outcomes
+#   6. Attempt the Cinnamon (Wayland) login (session select via the
+#      greeter's Login Options menu, credentials, 120s wait), verify
+#      by state, capture evidence on both outcomes. The
+#      cinnamon-wayland.desktop entry is the launchable one on EL10
+#      (the X11 entry cannot launch: no Xorg, item 2c-1)
 #
 # Verdicts are state-based, not pixel-based (plan, Login drive step 4):
 # a loginctl session of type wayland/x11 for the user plus the expected
@@ -595,15 +598,26 @@ mkdir -p /root/evidence/cinnamon-attempt
 
 gdm_ensure_greeter gdmtest 150 || { echo "PHASE_RESULT FAIL greeter not up"; exit 1; }
 # What the greeter offers at this moment (session entries + a11y
-# structure). The a11y tree records whether the XSession "Cinnamon"
-# entry is listed at all (it may be filtered on EL10 without X).
+# structure). The a11y tree records which session entries the
+# greeter lists (X11 "Cinnamon" and "Cinnamon (Wayland)" after the
+# Cinnamon install; the Wayland entry is the launchable one on
+# EL10 — no Xorg, item 2c-1).
 ls -l /usr/share/xsessions/ /usr/share/wayland-sessions/ \
     > /root/evidence/cinnamon-attempt/sessions-available.log 2>&1 || true
 python3 /root/gdm-harness/gdm-a11y.py tree > /root/evidence/cinnamon-attempt/01-greeter-tree.log 2>&1 || true
 python3 /root/gdm-harness/gdm-a11y.py text > /root/evidence/cinnamon-attempt/01-greeter-text.log 2>&1 || true
 
 T0="$(date '+%F %T')"
-gdm_login gdmtest /root/gdmtest.pass cinnamon
+# rc=2 (gdm_login) = requested session not selectable in the greeter
+# menu: the attempt did not submit credentials, so it is a harness
+# verdict, not a PAM outcome.
+gdm_login gdmtest /root/gdmtest.pass cinnamon-wayland
+LOGIN_RC=$?
+if [ "$LOGIN_RC" -ne 0 ]; then
+    gdm_capture_evidence cinnamon-attempt "$T0" gdmtest
+    echo "PHASE_RESULT VERDICT cinnamon login FAIL (gdm_login rc=${LOGIN_RC}, no credentials submitted)"
+    exit 0
+fi
 gdm_wait_session gdmtest "$GDM_LOGIN_WAIT" cinnamon-session
 RC=$?
 gdm_capture_evidence cinnamon-attempt "$T0" gdmtest

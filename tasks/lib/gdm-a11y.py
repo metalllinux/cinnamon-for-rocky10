@@ -41,12 +41,24 @@ Usage:
                                    find-format line; exit 0 visible,
                                    1 timeout.
   gdm-a11y.py textof <name>        print the AT-SPI Text content of the
-                                   first visible node whose name matches
-                                   <name> (exact preferred). Reads what
-                                   has been typed into a field (password
-                                   fields read back empty by design).
-                                   Exit 0 when a node was found, 1 when
-                                   not.
+                                    first visible node whose name matches
+                                    <name> (exact preferred). Reads what
+                                    has been typed into a field (password
+                                    fields read back empty by design).
+                                    Exit 0 when a node was found, 1 when
+                                    not.
+  gdm-a11y.py findrole <role>      first node whose AT-SPI role name
+                                    contains <role> (e.g. "password text"
+                                    for the greeter's password entry,
+                                    which has no node name). Visible
+                                    nodes win over hidden ones. Prints
+                                    the find-format line; exit 1 when
+                                    no node matches.
+  gdm-a11y.py waitvisrole <role> [timeout]
+                                    poll (1 s) until a node whose role
+                                    contains <role> is VISIBLE. Same
+                                    semantics as waitvis, matched by
+                                    role instead of name.
 """
 
 import sys
@@ -187,6 +199,21 @@ def match_node(bus, needle):
     return nodes[0]
 
 
+def match_role(bus, needle):
+    """First greeter node whose AT-SPI role name contains needle
+    (e.g. 'password text'): some nodes carry no name at all (the
+    greeter's password entry), so name matching cannot reach them.
+    A visible node wins over hidden duplicates. Returns the 7-tuple
+    from walk() or None."""
+    nodes = [n for n in greeter_nodes(bus) if needle in n[1]]
+    if not nodes:
+        return None
+    for n in nodes:
+        if extents_visible(n[4]):
+            return n
+    return nodes[0]
+
+
 def cmd_tree(args):
     max_depth = int(args[0]) if args else 16
     bus = connect()
@@ -258,6 +285,16 @@ def cmd_find(args):
     print(fmt_line(n))
 
 
+def cmd_findrole(args):
+    if not args:
+        sys.exit("usage: gdm-a11y.py findrole <role>")
+    bus = connect()
+    n = match_role(bus, args[0])
+    if n is None:
+        sys.exit(1)
+    print(fmt_line(n))
+
+
 def cmd_waitvis(args):
     if not args:
         sys.exit("usage: gdm-a11y.py waitvis <name> [timeout]")
@@ -268,6 +305,27 @@ def cmd_waitvis(args):
         try:
             bus = connect()
             n = match_node(bus, needle)
+            if n is not None and extents_visible(n[4]):
+                print(fmt_line(n))
+                return
+        except SystemExit:
+            raise
+        except Exception:
+            pass
+        time.sleep(1)
+    sys.exit(1)
+
+
+def cmd_waitvisrole(args):
+    if not args:
+        sys.exit("usage: gdm-a11y.py waitvisrole <role> [timeout]")
+    needle = args[0]
+    timeout = int(args[1]) if len(args) > 1 else 60
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            bus = connect()
+            n = match_role(bus, needle)
             if n is not None and extents_visible(n[4]):
                 print(fmt_line(n))
                 return
@@ -316,6 +374,10 @@ def main():
         cmd_find(args)
     elif cmd == "waitvis":
         cmd_waitvis(args)
+    elif cmd == "findrole":
+        cmd_findrole(args)
+    elif cmd == "waitvisrole":
+        cmd_waitvisrole(args)
     elif cmd == "textof":
         cmd_textof(args)
     else:
