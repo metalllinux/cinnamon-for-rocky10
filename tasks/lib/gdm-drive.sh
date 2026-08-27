@@ -275,19 +275,47 @@ gdm_session_entry() {
     esac
 }
 
-# The greeter shows a "Caps lock is on" warning label while caps lock
-# is set. The ukey device is created fresh per invocation (its
-# modifier state always starts off), so the typed password is
-# unaffected; the warning is display hygiene for the evidence capture
-# (a stray "Caps lock is on" in the failure-dialog a11y dump is a
-# surprise to read). Toggle until the label is gone, 3 tries max.
+# Ensure the greeter's caps lock state is OFF before the password is
+# typed.
+#
+# Do NOT drive this from the "Caps lock is on" label: on the gdm-47
+# Wayland greeter that label is a STATIC display. Verified 2026-08-27
+# (item 2c-2b, greeter session c2): two ukey Caps_Lock presses
+# flipped the kernel's cross-device caps LED 0 -> 1 -> 0 while the
+# label stayed visible the whole time, and the a11y clock node
+# advanced in the same window (the a11y tree itself is live, so the
+# label is not updating, not the tree). The old label-driven loop
+# ("toggle until the label is gone, 3 tries max") therefore sent all
+# 3 presses whenever the label was visible and, starting from caps
+# OFF, ended with caps ON: the typed password's a-f hex chars went
+# out as A-F and pam_unix rejected it (the 17:38 UTC attempt:
+# "password check failed for user (gdmtest)", with the passfile
+# crypt-verified against /etc/shadow in the same window). That is the
+# reproduction of the greeter's "Sorry, password authentication didn't
+# work" dialog.
+#
+# The trustworthy state is the kernel's: every caps press flips the
+# caps LED on the AT keyboard (the input core synchronizes it across
+# devices, verified by ukey presses flipping
+# /sys/class/leds/input1::capslock/brightness), and mutter's seat
+# caps state is initialized from the keyboard's LED state when the
+# greeter opens the input and is flipped by each caps press that
+# reaches it. Normalize from the LED: exactly one press iff the LED
+# is on. The caller (gdm_login) reaches the password stage by a click
+# first, so the input pipeline is proven live before this runs and
+# LED and mutter state are in parity.
 gdm_caps_lock_off() {
-    local i
-    for i in 1 2 3; do
-        $A11Y waitvis "Caps lock is on" 2 >/dev/null 2>&1 || return 0
+    local led
+    led=$(cat /sys/class/leds/*capslock*/brightness 2>/dev/null | head -1)
+    led="${led:-0}"
+    if [ "$led" = "1" ]; then
         gdm_key Caps_Lock
         sleep 1
-    done
+        led=$(cat /sys/class/leds/*capslock*/brightness 2>/dev/null | head -1)
+        echo "gdm-drive: caps LED was on; after one toggle led=${led:-?}" >&2
+    else
+        echo "gdm-drive: caps LED off; no toggle sent" >&2
+    fi
     return 0
 }
 
