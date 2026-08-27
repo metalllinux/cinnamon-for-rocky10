@@ -27,14 +27,25 @@
  *   ukey key <name>               one key (names below)
  *   ukey combo <mod>... <name>    modifier combo, e.g.
  *                                 ukey combo ctrl alt Down
- *   ukey move <dx> <dy>           relative pointer motion
+ *   ukey absmove <x> <y>          absolute pointer placement (screen
+ *                                 coordinates, 0..1279 x 0..799 for the
+ *                                 harness VM's 1280x800 framebuffer)
+ *   ukey move <dx> <dy>           relative pointer motion (legacy; the
+ *                                 pointer position is NOT clamped by the
+ *                                 compositor, so repeated relative moves
+ *                                 drift off-screen — use absmove)
  *   ukey click                    left button press+release at the
  *                                 current pointer position
  *
- * Absolute pointer placement without reading the current position:
- *   ukey move -10000 -10000   (clamps the pointer to 0,0)
- *   ukey move <x> <y>         (now lands exactly on x,y)
- *   ukey click
+ * Why absmove (item 2c, verified 2026-08-27): the earlier
+ * "move -10000 -10000 to clamp to 0,0 then walk back" trick assumed the
+ * compositor clamps the pointer to the screen corner. It does not: the
+ * logical pointer position persists across uinput device teardown and
+ * accumulates the relative deltas, so the pointer drifts far off-screen
+ * and clicks land outside the display (observed: no cursor drawn, no
+ * hover, face-list button clicks ignored on the gdm-47 Wayland greeter).
+ * An absolute axis (EV_ABS, the same capability class as the QEMU USB
+ * tablet on the same seat) places the pointer deterministically.
  *
  * Key names: Return Enter Tab BackSpace Escape Caps_Lock space Down Up
  *            Left Right Home End Page_Up Page_Down F1..F12 a-z 0-9 and
@@ -68,6 +79,11 @@
  * settle -> events land. */
 #define CREATE_SETTLE_US 300000  /* after UI_DEV_CREATE, before events */
 #define DESTROY_HOLD_US  250000  /* after last event, before destroy   */
+/* Absolute pointer range. Must match the harness VM's framebuffer
+ * (1280x800, the gdm-47 greeter resolution observed on the libvirt
+ * VNC VM; the a11y root panel extents report it). */
+#define ABS_X_MAX 1279
+#define ABS_Y_MAX 799
 
 static void die(const char *msg)
 {
@@ -81,7 +97,8 @@ static void usage(void)
         "usage: ukey type <string>\n"
         "       ukey key <name>\n"
         "       ukey combo <mod>... <name>   (mods: ctrl alt shift)\n"
-        "       ukey move <dx> <dy>\n"
+        "       ukey absmove <x> <y>         (absolute placement)\n"
+        "       ukey move <dx> <dy>          (relative, legacy)\n"
         "       ukey click\n");
     exit(2);
 }
@@ -180,13 +197,11 @@ static int ascii_to_key(unsigned char c, int *shift)
 
 static int dev_fd = -1;
 
-static int set_bit(int what, int code)
+static int set_bit(int what, int code, const char *name)
 {
     if (ioctl(dev_fd, what, (unsigned long) code) < 0) {
         fprintf(stderr, "ukey: ioctl(%s, %d): %s\n",
-                what == UI_SET_EVBIT ? "UI_SET_EVBIT" :
-                what == UI_SET_RELBIT ? "UI_SET_RELBIT" : "UI_SET_KEYBIT",
-                code, strerror(errno));
+                name, code, strerror(errno));
         return -1;
     }
     return 0;
@@ -194,8 +209,9 @@ static int set_bit(int what, int code)
 
 static int dev_create(void)
 {
-    static const int evbits[] = { EV_SYN, EV_KEY, EV_REL };
+    static const int evbits[] = { EV_SYN, EV_KEY, EV_REL, EV_ABS };
     static const int relbits[] = { REL_X, REL_Y };
+    static const int absbits[] = { ABS_X, ABS_Y };
     static const int keybits[] = {
         KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H,
         KEY_I, KEY_J, KEY_K, KEY_L, KEY_M, KEY_N, KEY_O, KEY_P,
@@ -223,15 +239,19 @@ static int dev_create(void)
     }
 
     for (size_t i = 0; i < sizeof(evbits) / sizeof(evbits[0]); i++) {
-        if (set_bit(UI_SET_EVBIT, evbits[i]) < 0)
+        if (set_bit(UI_SET_EVBIT, evbits[i], "UI_SET_EVBIT") < 0)
             goto fail;
     }
     for (size_t i = 0; i < sizeof(relbits) / sizeof(relbits[0]); i++) {
-        if (set_bit(UI_SET_RELBIT, relbits[i]) < 0)
+        if (set_bit(UI_SET_RELBIT, relbits[i], "UI_SET_RELBIT") < 0)
+            goto fail;
+    }
+    for (size_t i = 0; i < sizeof(absbits) / sizeof(absbits[0]); i++) {
+        if (set_bit(UI_SET_ABSBIT, absbits[i], "UI_SET_ABSBIT") < 0)
             goto fail;
     }
     for (size_t i = 0; i < sizeof(keybits) / sizeof(keybits[0]); i++) {
-        if (set_bit(UI_SET_KEYBIT, keybits[i]) < 0)
+        if (set_bit(UI_SET_KEYBIT, keybits[i], "UI_SET_KEYBIT") < 0)
             goto fail;
     }
 
@@ -245,6 +265,19 @@ static int dev_create(void)
     if (ioctl(dev_fd, UI_DEV_SETUP, &us) < 0) {
         fprintf(stderr, "ukey: UI_DEV_SETUP: %s\n", strerror(errno));
         goto fail;
+    }
+    /* Absolute pointer range (must match the VM framebuffer). */
+    for (int axis = 0; axis < 2; axis++) {
+        struct uinput_abs_setup uas;
+        memset(&uas, 0, sizeof(uas));
+        uas.code = (axis == 0) ? ABS_X : ABS_Y;
+        uas.absinfo.minimum = 0;
+        uas.absinfo.maximum = (axis == 0) ? ABS_X_MAX : ABS_Y_MAX;
+        if (ioctl(dev_fd, UI_ABS_SETUP, &uas) < 0) {
+            fprintf(stderr, "ukey: UI_ABS_SETUP(%d): %s\n",
+                    uas.code, strerror(errno));
+            goto fail;
+        }
     }
     if (ioctl(dev_fd, UI_DEV_CREATE) < 0) {
         fprintf(stderr, "ukey: UI_DEV_CREATE: %s\n", strerror(errno));
@@ -347,7 +380,8 @@ int main(int argc, char **argv)
         if (argc != 2)
             usage();
     } else if (strcmp(cmd, "type") != 0 && strcmp(cmd, "key") != 0 &&
-               strcmp(cmd, "combo") != 0 && strcmp(cmd, "move") != 0) {
+               strcmp(cmd, "combo") != 0 && strcmp(cmd, "move") != 0 &&
+               strcmp(cmd, "absmove") != 0) {
         usage();
     }
 
@@ -407,8 +441,9 @@ int main(int argc, char **argv)
             usage();
         long dx = parse_long(argv[2], "dx must be an integer");
         long dy = parse_long(argv[3], "dy must be an integer");
-        /* Clamp absurd values; the compositor clamps the pointer to
-         * the screen anyway, and overflow would wrap the int. */
+        /* Clamp absurd values so the int write does not wrap. Note:
+         * the compositor does NOT clamp the pointer position, so
+         * relative motion accumulates; use absmove for placement. */
         if (dx > 100000) dx = 100000;
         if (dx < -100000) dx = -100000;
         if (dy > 100000) dy = 100000;
@@ -416,6 +451,17 @@ int main(int argc, char **argv)
         write_event(EV_REL, REL_X, (int) dx);
         usleep(MOTION_US);
         write_event(EV_REL, REL_Y, (int) dy);
+        write_event(EV_SYN, 0, 0);
+    } else if (strcmp(cmd, "absmove") == 0) {
+        if (argc != 4)
+            usage();
+        int x = (int) parse_long(argv[2], "x must be an integer");
+        int y = (int) parse_long(argv[3], "y must be an integer");
+        if (x < 0 || x > ABS_X_MAX || y < 0 || y > ABS_Y_MAX)
+            die("absmove: coordinates outside the "
+                "0..ABS_X_MAX x 0..ABS_Y_MAX range");
+        write_event(EV_ABS, ABS_X, x);
+        write_event(EV_ABS, ABS_Y, y);
         write_event(EV_SYN, 0, 0);
     } else {  /* click */
         key_press(BTN_LEFT);

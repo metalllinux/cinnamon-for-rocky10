@@ -6,15 +6,22 @@
 #   - vm-test/test-gdm-login.sh (libvirt reproduction harness, item 2)
 #   - tasks/*/task.bash (Sparky/Sparrow matrix, item 9a/9b)
 #
-# Design note (item 2, verified 2026-08-24): Rocky Linux 10 cannot run
-# an X11 GDM greeter, so this library drives the Wayland one:
-#   - no xorg-x11-server-Xorg exists in the EL10 repos
-#     (appstream/baseos/crb, EPEL 10) or on the 10.2 DVD (only
-#     xorg-x11-server-Xwayland, no runtime), so no X server is
-#     installable and the plan's X11-forced greeter + XTest/xdotool
+# Design note (item 2, verified 2026-08-24; re-verified live in the
+# test VM 2026-08-27, item 2c): Rocky Linux 10 cannot run an X11 GDM
+# greeter, so this library drives the Wayland one:
+#   - no xorg-x11-server-Xorg exists in the EL10 repos. Item 2c
+#     evidence (Rocky 10.2 guest with baseos/appstream/crb/extras +
+#     the local repo): `dnf list available "xorg-x11-server*"` lists
+#     only xorg-x11-server-Xwayland-devel (crb); `dnf provides
+#     /usr/bin/Xorg` -> "No matches found"; on a Rocky 10.2 host with
+#     EPEL 10 enabled, `dnf list available xorg-x11-server-Xorg` ->
+#     "No matching Packages". The X11-forced greeter + XTest/xdotool
 #     design (plan, VM reproduction design; risk R1) is infeasible;
 #   - gdm-47 on EL10 ships only /usr/libexec/gdm-wayland-session (no
-#     gdm-x-session), so GDM itself is Wayland-only.
+#     gdm-x-session) — `rpm -ql gdm | grep /usr/libexec/` shows
+#     gdm-auth-config-redhat, gdm-new-session, gdm-runtime-config,
+#     gdm-session-worker, gdm-wayland-session — so GDM itself is
+#     Wayland-only.
 # The greeter is mutter on Wayland. This library drives it with:
 #   - ukey (uinput): kernel-level keyboard + relative mouse,
 #     display-server agnostic (tasks/lib/ukey.c);
@@ -214,13 +221,17 @@ gdm_move() { "$UKEY" move "$1" "$2"; }
 
 gdm_click() { "$UKEY" click; }
 
-# Absolute pointer placement without reading the current position:
-# push the pointer off the top-left corner (the compositor clamps it
-# to 0,0), then walk back to (x,y).
+# Absolute pointer placement: one ukey absmove with the absolute
+# pointer axis (EV_ABS). Deterministic; no reading of the current
+# position and no accumulation of relative deltas. (The earlier
+# "move -10000 -10000 to clamp to 0,0" trick is wrong: the compositor
+# does not clamp the logical pointer position, so relative deltas
+# accumulate across invocations and the pointer drifts off-screen,
+# where clicks land outside the display. Verified 2026-08-27, item 2c:
+# no cursor drawn and face-list button clicks ignored until the
+# absolute axis was added to ukey.)
 gdm_abs_move() {
-    gdm_move -10000 -10000
-    sleep 0.3
-    gdm_move "$1" "$2"
+    "$UKEY" absmove "$1" "$2"
     sleep 0.3
 }
 
