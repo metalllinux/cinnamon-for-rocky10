@@ -402,9 +402,12 @@ mkdir -p /root/evidence
 
 # 2. GDM + GNOME baseline (the user's configuration, plan A1). The
 #    resolved package set is recorded for the planning doc.
-#    NOTE: no X server package exists on EL10 (item 2 finding) — the
-#    greeter is Wayland (gdm-47 ships only gdm-wayland-session), so no
-#    /etc/gdm/custom.conf is written and nothing X is installed.
+#    NOTE: no X server package exists on EL10 (item 2 finding,
+#    re-verified live in the test VM 2026-08-27 item 2c: dnf list
+#    available "xorg-x11-server*" -> only Xwayland-devel in crb; dnf
+#    provides /usr/bin/Xorg -> no matches; EPEL 10 has no Xorg either)
+#    — the greeter is Wayland (gdm-47 ships only gdm-wayland-session),
+#    so no /etc/gdm/custom.conf is written and nothing X is installed.
 dnf install -y gdm gnome-shell \
     > /root/evidence/baseline-dnf.log 2>&1 \
     || fail "dnf install gdm gnome-shell"
