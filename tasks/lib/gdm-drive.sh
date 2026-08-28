@@ -305,6 +305,10 @@ gdm_session_entry() {
 # first, so the input pipeline is proven live before this runs and
 # LED and mutter state are in parity.
 gdm_caps_lock_off() {
+    # Superseded in gdm_login by gdm_caps_probe_normalize (item 2c-3):
+    # the readback-verified compositor state is ground truth, and a
+    # blind LED-driven toggle would act on the proxy, not the state.
+    # Kept for callers that only have the LED.
     local led
     led=$(cat /sys/class/leds/*capslock*/brightness 2>/dev/null | head -1)
     led="${led:-0}"
@@ -316,6 +320,176 @@ gdm_caps_lock_off() {
     else
         echo "gdm-drive: caps LED off; no toggle sent" >&2
     fi
+    return 0
+}
+
+# Probe-typed caps normalization with readback verification (item 2c-3).
+#
+# Why the probe: the kernel caps LED (gdm_caps_lock_off) is a parity
+# proxy only while every caps press reaches the compositor. The 2c-2
+# open hypothesis was exactly that divergence: Attempt B ran with the
+# LED off and no toggle sent, yet the password was still rejected.
+# The compositor's caps state is not directly readable (the "Caps
+# lock is on" label is a static display — 2c-2 item 3 — and the
+# password entry reads back empty by design), so it is verified by
+# behavior: type a lowercase probe into an editable field, read the
+# text back over AT-SPI (gdm-a11y.py textofext), and compare case.
+#
+# Where the probe is typed: the password stage reached by a face click
+# has NO editable username field — the username is a read-only label
+# (live a11y tree, item 2c-3: the 2c-2 probe coordinate (555,335) is a
+# [label] 'gdmtest' with an empty [text] child, not an entry). The
+# editable username entry lives in the "Not listed?" username dialog,
+# so the pre-pass drives that dialog. It is also the documented GDM
+# username-advance path (gdm_login step 2) that the face click used
+# to bypass, so no new greeter surface is introduced.
+#
+# Greeter quirks the targeting must ride out (all verified live,
+# item 2c-3, gdm-47/gnome-shell 49.4 greeter at 1280x800):
+#   - the a11y state sets come back EMPTY for every node, so the
+#     entry cannot be selected by the editable state;
+#   - the dialog's entry is a role-'text' node like the face-list
+#     label texts, so it is targeted by POINT (the fixed dialog
+#     layout: entry origin (489,465), point (491,475) is inside the
+#     entry in every reported-extent state);
+#   - the a11y bridge oscillates the entry's reported width between
+#     the widget allocation (302x20) and the text-content width
+#     (5x20), and the dialog has been observed reporting hidden
+#     while open, so entry lookup and readback are retried;
+#   - the lingering failure dialog ("Sorry, password...") is NOT
+#     closed by Escape (3 presses, no effect) but IS closed by its
+#     Cancel button (click verified: returned to the face list).
+#
+# Sequence: dismiss a lingering dialog (Cancel click) -> "Not listed?"
+# -> wait for the 'Empty User' label (the fresh-dialog marker) ->
+# resolve the entry at the point -> click it (focus) -> type the
+# probe -> textofext readback at the entry center. Lowercase readback
+# = compositor caps OFF, verified. Uppercase readback = caps ON: one
+# Caps_Lock press, clear the probe, retype, re-read; max 3 toggles.
+# A readback that is neither the probe nor its uppercase means the
+# input pipeline or the a11y readback is broken and the attempt must
+# not be interpreted. The probe is always cleared before return, then
+# the username is typed and submitted (Return; a second Return is the
+# fallback advance), leaving the password stage up with the password
+# entry focused.
+#
+# Returns: 0 password stage reached with the compositor caps state
+# verified lowercase by readback; 1 the username dialog, its entry,
+# or the password stage did not appear; 2 the readback did not match
+# the probe in either case; 3 the caps state would not normalize
+# within 3 toggles.
+gdm_caps_probe_normalize() {
+    local user="$1"
+    local probe="abc"   # letters only: caps changes every char's case
+    local line x y w h cx cy readback upper tries=0 n i k
+    local led
+
+    # Dismiss a lingering dialog (failure or stale username): its
+    # Cancel button is the reliable dismissal (see quirks above).
+    # The face list itself has no Cancel button, so the loop is a
+    # no-op when no dialog is up.
+    for n in 1 2 3; do
+        if $A11Y waitvis "Cancel" 4 >/dev/null 2>&1; then
+            gdm_click_visible "Cancel" 5 || true
+            sleep 1
+        else
+            break
+        fi
+    done
+
+    gdm_click_visible "Not listed?" 20 || {
+        echo "gdm-drive: caps probe: 'Not listed?' not visible (face-list stage up?)" >&2
+        return 1
+    }
+    # The fresh username dialog (unlisted user, always empty) is
+    # marked by the 'Empty User' label.
+    if ! $A11Y waitvis "Empty User" 30 >/dev/null 2>&1; then
+        echo "gdm-drive: caps probe: username dialog did not open ('Empty User' not visible after 30s)" >&2
+        return 1
+    fi
+
+    # Resolve the entry: the visible role-'text' node covering the
+    # fixed point (491,475) (see quirks). Retry: the extent
+    # oscillation and the dialog's intermittent a11y visibility make
+    # a single lookup unreliable.
+    line=""
+    for i in 1 2 3 4 5; do
+        line=$($A11Y findrolex "text" 491 475 2>/dev/null) && break
+        sleep 1
+    done
+    if [ -z "$line" ]; then
+        echo "gdm-drive: caps probe: no role-'text' node covering (491,475) after 5 tries" >&2
+        return 1
+    fi
+    x=$(cut -f3 <<<"$line"); y=$(cut -f4 <<<"$line")
+    w=$(cut -f5 <<<"$line"); h=$(cut -f6 <<<"$line")
+    if [ "$w" = "-" ] || [ "$h" = "-" ]; then
+        echo "gdm-drive: caps probe: entry has no usable extents: ${line}" >&2
+        return 1
+    fi
+    cx=$((x + w / 2)); cy=$((y + h / 2))
+    echo "gdm-drive: caps probe: entry @(${x},${y} ${w}x${h}), typing at ${cx},${cy}" >&2
+
+    gdm_abs_click "$cx" "$cy"
+    gdm_type "$probe"
+    sleep 0.5
+    readback=""
+    for i in 1 2 3; do
+        if readback=$($A11Y textofext "$cx" "$cy" 2>/dev/null); then
+            break
+        fi
+        sleep 1
+    done
+    echo "gdm-drive: caps probe: typed '${probe}', readback '${readback}'" >&2
+
+    upper=$(echo "$probe" | tr 'a-z' 'A-Z')
+    while [ "$readback" != "$probe" ]; do
+        if [ "$readback" = "$upper" ]; then
+            tries=$((tries + 1))
+            if [ "$tries" -gt 3 ]; then
+                echo "gdm-drive: caps probe: still uppercase after 3 Caps_Lock toggles; giving up" >&2
+                return 3
+            fi
+            echo "gdm-drive: caps probe: uppercase readback; Caps_Lock toggle ${tries}/3" >&2
+            gdm_key Caps_Lock
+            sleep 1
+            for i in 1 2 3; do gdm_key BackSpace; done
+            sleep 0.3
+            gdm_type "$probe"
+            sleep 0.5
+            readback=""
+            for k in 1 2 3; do
+                if readback=$($A11Y textofext "$cx" "$cy" 2>/dev/null); then
+                    break
+                fi
+                sleep 1
+            done
+            echo "gdm-drive: caps probe: re-read '${readback}'" >&2
+        else
+            echo "gdm-drive: caps probe: readback '${readback}' is neither '${probe}' nor its uppercase; input or a11y readback broken" >&2
+            return 2
+        fi
+    done
+    echo "gdm-drive: caps probe: compositor caps verified LOWERCASE by readback (${tries} toggle(s))" >&2
+
+    # Verified lowercase: clear the probe, type and submit the username.
+    for i in 1 2 3; do gdm_key BackSpace; done
+    sleep 0.3
+    gdm_type "$user"
+    sleep 0.5
+    gdm_key Return
+    sleep 2
+    if ! $A11Y waitvisrole "password text" 20 >/dev/null 2>&1; then
+        # Return is the documented advance key; a second press is the
+        # fallback (the dialog's submit button is an unnamed icon).
+        gdm_key Return
+        if ! $A11Y waitvisrole "password text" 30 >/dev/null 2>&1; then
+            echo "gdm-drive: caps probe: password stage did not appear after username submit" >&2
+            return 1
+        fi
+    fi
+    led=$(cat /sys/class/leds/*capslock*/brightness 2>/dev/null | head -1)
+    echo "gdm-drive: caps probe: kernel caps LED now ${led:-?} (parity record only)" >&2
     return 0
 }
 
@@ -373,30 +547,41 @@ gdm_dismiss_errors() {
 #   (Wayland) entry; anything else logs in to the default (GNOME)
 #   session.
 #
-# Flow (item 2, attempt 4 face-list observation + item 2c-2 session
-# menu, pinned by a11y-tree evidence on the gdm-47 Wayland greeter):
-#   1. The greeter shows the face list when the user is known (there
-#      is no username field and no "Log In" node in this mode), so
-#      the password dialog is reached by clicking the user's face.
-#   2. Fallback: "Not listed?" opens the username+password dialog;
-#      type the username, Return (the documented GDM username-advance
-#      key).
-#   3. Wait for the password entry (a11y role "password text" becomes
+# Flow (item 2c-3; session menu pinned by a11y-tree evidence on the
+# gdm-47 Wayland greeter, item 2c-2):
+#   1. Caps pre-pass (gdm_caps_probe_normalize): reach the password
+#      stage through the "Not listed?" username dialog, type a probe
+#      into its editable entry, read it back over AT-SPI, and toggle
+#      Caps_Lock until the readback is lowercase (max 3), then clear
+#      the probe and submit the username. This verifies the
+#      compositor's caps state — the thing that corrupts the password
+#      — by readback, which the face-click path could not do (its
+#      password stage has no editable field; the face-name node at
+#      (555,335) is a read-only label, verified in the live tree,
+#      item 2c-3). The face-click path is retired for that reason.
+#   2. Wait for the password entry (a11y role "password text" becomes
 #      visible) before typing the password. (On the gdm-47 Wayland
 #      greeter the "Login code:" label stays hidden in the password
 #      stage — item 2c-2 — so the role, not the label, is the
 #      readiness marker.)
-#   4. Session selection (the Login Options menu) is only offered
-#      from the login dialog, so it happens after step 3, before the
+#   3. Session selection (the Login Options menu) is only offered
+#      from the login dialog, so it happens after step 2, before the
 #      password. When a session is explicitly requested and cannot be
 #      selected, the attempt aborts (return 2) without submitting
 #      credentials: logging in to the default session would test a
 #      different thing and blur the verdict.
-# Returns: 0 input sent, 2 requested session not selectable,
-# 3 greeter not reachable / no login surface.
+#   4. The kernel caps LED is logged (read-only) for the parity
+#      record. No toggle is sent here: the pre-pass verified the
+#      compositor state by readback, and the LED is only a proxy
+#      (2c-2: the two can diverge — a blind toggle would act on the
+#      proxy, not the verified state).
+# Returns: 0 input sent (caps state verified lowercase by readback),
+# 2 requested session not selectable, 3 greeter not reachable / no
+# login surface, 4 caps pre-pass failed (input not verified: no
+# credentials submitted).
 gdm_login() {
     local user="$1" passfile="$2" session="$3"
-    local entry
+    local entry led rc
 
     [ -r "$passfile" ] || {
         echo "gdm-drive: cannot read passfile ${passfile}" >&2
@@ -405,15 +590,11 @@ gdm_login() {
     gdm_ensure_greeter "$user" 150 || return 3
     gdm_dismiss_errors
 
-    # Reach the password dialog.
-    if gdm_click_visible "$user" 20; then
-        : # face clicked; GDM advances to the password field
-    else
-        gdm_click_visible "Not listed?" 20 || return 3
-        gdm_type "$user"
-        sleep 1
-        gdm_key Return
-    fi
+    gdm_caps_probe_normalize "$user" || {
+        rc=$?
+        echo "gdm-drive: caps pre-pass failed (rc=${rc}); aborting without credentials" >&2
+        return 4
+    }
     $A11Y waitvisrole "password text" 30 >/dev/null 2>&1 || {
         echo "gdm-drive: password entry did not appear after user selection" >&2
         return 3
@@ -429,7 +610,8 @@ gdm_login() {
         sleep 1
     fi
 
-    gdm_caps_lock_off
+    led=$(cat /sys/class/leds/*capslock*/brightness 2>/dev/null | head -1)
+    echo "gdm-drive: pre-password kernel caps LED ${led:-?} (compositor caps verified lowercase by probe readback)" >&2
     gdm_type "$(cat "$passfile")"
     sleep 1
     gdm_key Return

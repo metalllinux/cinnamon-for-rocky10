@@ -130,6 +130,31 @@ static const struct {
     { "F10", KEY_F10 }, { "F11", KEY_F11 }, { "F12", KEY_F12 },
 };
 
+/* The letters are NOT contiguous in Linux keycode space (a=30, s=31,
+ * d=32, ... z=44, x=45, c=46, v=47, b=48, n=49, m=50 — home-row and
+ * bottom-row physical order), so "KEY_A + (c - 'a')" is WRONG for
+ * every letter except 'a'. Verified broken 2026-08-28 (item 2c-3):
+ * strace of "ukey type ab" showed the kernel receiving KEY_A, KEY_S,
+ * and the greeter readback of a typed "abc" was "asd" (the AT-SPI
+ * text of the username entry, the only editable field with a
+ * readable a11y Text interface). The bug corrupted every letter of
+ * every password the harness typed: with the test user's hex
+ * charset (0-9 a-f), b->s, e->g, f->h — which is why both 2c-2
+ * attempts were rejected by pam_unix while the identical password
+ * authenticated fine through su. */
+static int letter_to_key(char c)
+{
+    static const int letters[26] = {
+        KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H,
+        KEY_I, KEY_J, KEY_K, KEY_L, KEY_M, KEY_N, KEY_O, KEY_P,
+        KEY_Q, KEY_R, KEY_S, KEY_T, KEY_U, KEY_V, KEY_W, KEY_X,
+        KEY_Y, KEY_Z,
+    };
+    if (c < 'a' || c > 'z')
+        return -1;
+    return letters[c - 'a'];
+}
+
 static int name_to_code(const char *name)
 {
     for (size_t i = 0; i < sizeof(key_names) / sizeof(key_names[0]); i++) {
@@ -139,21 +164,22 @@ static int name_to_code(const char *name)
     if (strlen(name) == 1) {
         unsigned char c = (unsigned char) name[0];
         if (c >= 'a' && c <= 'z')
-            return KEY_A + (c - 'a');
+            return letter_to_key(c);   /* see letter_to_key: the
+                                          * "KEY_A + (c - 'a')" form is
+                                          * wrong, letters are not
+                                          * contiguous in keycode space */
         if (c >= '0' && c <= '9')
             return (c == '0') ? KEY_0 : KEY_1 + (c - '1');
     }
     return -1;
 }
 
-/* --- ASCII -> (keycode, needs-shift) for type() --- */
-
 static int ascii_to_key(unsigned char c, int *shift)
 {
     *shift = 0;
     switch (c) {
-    case 'a' ... 'z': return KEY_A + (c - 'a');
-    case 'A' ... 'Z': *shift = 1; return KEY_A + (c - 'A');
+    case 'a' ... 'z': return letter_to_key(c);
+    case 'A' ... 'Z': *shift = 1; return letter_to_key(c);
     case '0': return KEY_0;
     case '1' ... '9': return KEY_1 + (c - '1');
     case ' ': return KEY_SPACE;
