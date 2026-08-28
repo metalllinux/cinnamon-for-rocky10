@@ -47,18 +47,45 @@ Usage:
                                     fields read back empty by design).
                                     Exit 0 when a node was found, 1 when
                                     not.
-  gdm-a11y.py findrole <role>      first node whose AT-SPI role name
-                                    contains <role> (e.g. "password text"
-                                    for the greeter's password entry,
-                                    which has no node name). Visible
-                                    nodes win over hidden ones. Prints
-                                    the find-format line; exit 1 when
-                                    no node matches.
-  gdm-a11y.py waitvisrole <role> [timeout]
-                                    poll (1 s) until a node whose role
-                                    contains <role> is VISIBLE. Same
-                                    semantics as waitvis, matched by
-                                    role instead of name.
+   gdm-a11y.py findrole <role>      first node whose AT-SPI role name
+                                     contains <role> (e.g. "password text"
+                                     for the greeter's password entry,
+                                     which has no node name). Visible
+                                     nodes win over hidden ones. Prints
+                                     the find-format line; exit 1 when
+                                     no node matches.
+   gdm-a11y.py waitvisrole <role> [timeout]
+                                     poll (1 s) until a node whose role
+                                     contains <role> is VISIBLE. Same
+                                     semantics as waitvis, matched by
+                                     role instead of name.
+   gdm-a11y.py findrolex <role> [x] [y]
+                                     like findrole, but the role name
+                                     must EQUAL <role> exactly (the
+                                     substring form reaches "password
+                                     text" when looking for "text").
+                                     With [x] [y], only visible nodes
+                                     whose extents contain the point
+                                     match, innermost (deepest) wins —
+                                     point targeting for nodes that
+                                     share a role with other nodes on
+                                     the same stage. Same output and
+                                     exit codes.
+   gdm-a11y.py waitvisrolex <role> [timeout]
+                                     like waitvisrole, exact role match.
+   gdm-a11y.py textofext <x> <y>   print the AT-SPI Text content of the
+                                     visible node at screen point (x, y):
+                                     the innermost (deepest) visible
+                                     node whose extents contain the
+                                     point, no node name required
+                                     (the greeter's editable entries
+                                     carry empty names). Tries covering
+                                     nodes from innermost outward until
+                                     one exposes a Text interface.
+                                     Exit 0 with the text (possibly
+                                     empty), 1 when no visible node
+                                     covers the point, 2 when no
+                                     covering node exposes Text.
 """
 
 import sys
@@ -214,6 +241,38 @@ def match_role(bus, needle):
     return nodes[0]
 
 
+def match_rolex(bus, needle, point=None):
+    """First greeter node whose AT-SPI role name EQUALS needle exactly.
+    The substring form (match_role) reaches 'password text' when
+    looking for 'text', so exact matching is needed to single out the
+    plain text nodes. With point=(x, y), only VISIBLE nodes whose
+    extents contain the point match, and the innermost (deepest) wins:
+    the point form is how to target a node that shares its role with
+    other nodes on the same stage (the username dialog's entry is a
+    role-'text' node, as are the face-list label texts). Without a
+    point, a visible node wins over hidden duplicates. Returns the
+    7-tuple from walk() or None."""
+    if point is not None:
+        px, py = point
+        hits = []
+        for n in greeter_nodes(bus):
+            if n[1] != needle or not extents_visible(n[4]):
+                continue
+            x, y, w, h = n[4]
+            if x <= px < x + w and y <= py < y + h:
+                hits.append(n)
+        if not hits:
+            return None
+        return max(hits, key=lambda n: n[0])
+    nodes = [n for n in greeter_nodes(bus) if n[1] == needle]
+    if not nodes:
+        return None
+    for n in nodes:
+        if extents_visible(n[4]):
+            return n
+    return nodes[0]
+
+
 def cmd_tree(args):
     max_depth = int(args[0]) if args else 16
     bus = connect()
@@ -337,6 +396,43 @@ def cmd_waitvisrole(args):
     sys.exit(1)
 
 
+def cmd_findrolex(args):
+    if not args:
+        sys.exit("usage: gdm-a11y.py findrolex <role> [x] [y]")
+    point = None
+    if len(args) >= 3:
+        try:
+            point = (int(args[1]), int(args[2]))
+        except ValueError:
+            sys.exit("usage: gdm-a11y.py findrolex <role> [x] [y]")
+    bus = connect()
+    n = match_rolex(bus, args[0], point)
+    if n is None:
+        sys.exit(1)
+    print(fmt_line(n))
+
+
+def cmd_waitvisrolex(args):
+    if not args:
+        sys.exit("usage: gdm-a11y.py waitvisrolex <role> [timeout]")
+    needle = args[0]
+    timeout = int(args[1]) if len(args) > 1 else 60
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            bus = connect()
+            n = match_rolex(bus, needle)
+            if n is not None and extents_visible(n[4]):
+                print(fmt_line(n))
+                return
+        except SystemExit:
+            raise
+        except Exception:
+            pass
+        time.sleep(1)
+    sys.exit(1)
+
+
 def cmd_textof(args):
     if not args:
         sys.exit("usage: gdm-a11y.py textof <name>")
@@ -355,6 +451,41 @@ def cmd_textof(args):
               file=sys.stderr)
         sys.exit(1)
     print(text)
+
+
+def cmd_textofext(args):
+    if len(args) < 2:
+        sys.exit("usage: gdm-a11y.py textofext <x> <y>")
+    try:
+        px, py = int(args[0]), int(args[1])
+    except ValueError:
+        sys.exit("usage: gdm-a11y.py textofext <x> <y>")
+    bus = connect()
+    hits = []
+    for depth, _role, _nm, _states, ext, dname, dpath in greeter_nodes(bus):
+        if not extents_visible(ext):
+            continue
+        x, y, w, h = ext
+        if x <= px < x + w and y <= py < y + h:
+            hits.append((depth, dname, dpath))
+    if not hits:
+        sys.exit(1)
+    # Innermost first: the text leaf is the deepest node covering the
+    # point (its containers cover it too, but sit above it in the
+    # tree). Containers rarely expose Text; the leaf does.
+    hits.sort(key=lambda t: t[0], reverse=True)
+    for _depth, dname, dpath in hits:
+        try:
+            t = dbus.Interface(bus.get_object(dname, dpath),
+                               "org.a11y.atspi.Text")
+            # GetText(firstChild, lastChild): the whole field.
+            print(str(t.GetText(0, 2 ** 31 - 1)))
+            return
+        except Exception:
+            continue
+    print("gdm-a11y: textofext: no covering node exposes a Text "
+          f"interface at ({px},{py})", file=sys.stderr)
+    sys.exit(2)
 
 
 def main():
@@ -378,8 +509,16 @@ def main():
         cmd_findrole(args)
     elif cmd == "waitvisrole":
         cmd_waitvisrole(args)
+    elif cmd == "findrolex":
+        cmd_findrolex(args)
+    elif cmd == "waitvisrolex":
+        cmd_waitvisrolex(args)
+    elif cmd == "waiteditable":
+        cmd_waiteditable(args)
     elif cmd == "textof":
         cmd_textof(args)
+    elif cmd == "textofext":
+        cmd_textofext(args)
     else:
         sys.exit(__doc__)
 
