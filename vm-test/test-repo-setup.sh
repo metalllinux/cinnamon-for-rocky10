@@ -111,6 +111,9 @@ wait_for_ssh() {
 provision_vm() {
     # Use the standard VM name from lib.sh for provisioning, then rename
     # Actually, let's use our own VM name directly
+    # Key hygiene before the fleet key is injected into the VM
+    # (TASK-0008, Omega finding 2).
+    assert_ssh_key "${SSH_KEY}"
     mkdir -p /var/lib/libvirt/images/cinnamon-test
 
     if virsh domstate "${VM_NAME}" >/dev/null 2>&1; then
