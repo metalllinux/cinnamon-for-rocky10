@@ -397,7 +397,12 @@ test_vm_repo_setup() {
         printf '    %s\n' "$line"
     done
 
-    if echo "$exit_check" | grep -q "0$" && [ "$exit_check" != "255" ]; then
+    # Shadow finding 3 (TASK-0008): compare the rc value directly.
+    # `grep -q "0$"` matched any code whose last digit is 0 (10, 20,
+    # 30, ...), so a failed dnf transaction (rc 10) was recorded PASS
+    # with the literal detail "exit code 0". Only the exact value 0
+    # passes; the ssh-failure sentinel 255 needs no special case.
+    if [ "$exit_check" = "0" ]; then
         record "setup-repo.sh execution" "PASS" "exit code 0"
     else
         record "setup-repo.sh execution" "FAIL" "exit code: ${exit_check}"
@@ -545,7 +550,9 @@ test_vm_repo_setup() {
         printf '    %s\n' "$line"
     done
 
-    if echo "$install_rc" | grep -q "0$" && [ "$install_rc" != "255" ]; then
+    # Shadow finding 3 (TASK-0008): direct value comparison (same
+    # reasoning as the setup-repo.sh check above).
+    if [ "$install_rc" = "0" ]; then
         record "dnf install cinnamon" "PASS" "exit code 0"
     else
         record "dnf install cinnamon" "FAIL" "exit code: ${install_rc}"
@@ -586,7 +593,9 @@ test_vm_repo_setup() {
         printf '    %s\n' "$line"
     done
 
-    if echo "$extra_install_rc" | grep -q "0$" && [ "$extra_install_rc" != "255" ]; then
+    # Shadow finding 3 (TASK-0008): direct value comparison (same
+    # reasoning as the setup-repo.sh check above).
+    if [ "$extra_install_rc" = "0" ]; then
         record "dnf install extra packages" "PASS" "exit code 0 for ${extra_pkgs}"
     else
         record "dnf install extra packages" "FAIL" "exit code: ${extra_install_rc}"
