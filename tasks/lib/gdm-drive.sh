@@ -658,10 +658,25 @@ gdm_wait_session() {
 
 # Convenience: login + verdict in one call.
 #   $1 user, $2 passfile, $3 session (cinnamon|other), $4.. procs
+#
+# Shadow finding 8 (TASK-0008): a non-zero gdm_login rc is
+# propagated immediately instead of waiting GDM_LOGIN_WAIT. rc 2
+# (requested session not selectable), 3 (no login surface) and 4
+# (caps pre-pass failed) all mean the credentials were deliberately
+# NOT submitted, so a 120s session wait would only turn a
+# no-credentials abort into "no verified session after 120s" — the
+# failed-login misdiagnosis of 2c-2. Returns: gdm_login's rc (2/3/4)
+# on abort, otherwise gdm_wait_session's (0 verified, 3 no session
+# appeared, 4 session without the expected process).
 gdm_login_and_verify() {
     local user="$1" passfile="$2" session="$3"
     shift 3
-    gdm_login "$user" "$passfile" "$session" || true
+    local rc=0
+    gdm_login "$user" "$passfile" "$session" || rc=$?
+    if [ "$rc" -ne 0 ]; then
+        echo "gdm-drive: gdm_login rc=${rc}: credentials not submitted; not waiting for a session" >&2
+        return "$rc"
+    fi
     gdm_wait_session "$user" "$GDM_LOGIN_WAIT" "$@"
 }
 
