@@ -28,6 +28,13 @@ set -euo pipefail
 # Force system libvirt connection (session pool has no networks defined)
 export LIBVIRT_DEFAULT_URI=qemu:///system
 
+# Source shared constants and functions (TASK-0008 fix batch A: the
+# host-key pinning machinery, ssh_pin_opts / seed_vm_pin). The local
+# redefinitions below keep the same values as lib.sh.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=vm-test/lib.sh
+source "${SCRIPT_DIR}/lib.sh"
+
 # --- Constants ---
 
 PROJECT_DIR="${HOME}/Linux/projects/cinnamon-for-rocky10"
@@ -132,19 +139,28 @@ wait_for_vm() {
     local interval=10
     local elapsed=0
     local vm_ip=""
+    local disk_path="${IMG_DIR}/${vm_name}.qcow2"
 
     log "Waiting for ${vm_name} to become available (timeout: ${max_wait}s)..."
 
     while [ "$elapsed" -lt "$max_wait" ]; do
         vm_ip=$(get_vm_ip "$vm_name")
         if [ -n "$vm_ip" ]; then
-            # Try SSH
-            if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes \
-               -i "${SSH_KEY}" "${VM_USER}@${vm_ip}" \
-               "echo ready" >/dev/null 2>&1; then
-                log "${vm_name} is ready at ${vm_ip} after ${elapsed}s."
-                echo "$vm_ip"
-                return 0
+            # Pinned first contact (TASK-0008, Omega finding 1): seed
+            # the per-VM host-key pin file out-of-band from the disk
+            # image, then probe with StrictHostKeyChecking=yes. A
+            # missing pin file while the guest is still booting reads
+            # as "not ready yet" and the loop retries (see lib.sh).
+            if seed_vm_pin "$vm_name" "$disk_path"; then
+                ssh_pin_opts "$vm_ip" "$vm_name"
+                # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+                if ssh ${SSH_PIN_OPTS} -o ConnectTimeout=5 -o BatchMode=yes \
+                   -i "${SSH_KEY}" "${VM_USER}@${vm_ip}" \
+                   "echo ready" >/dev/null 2>&1; then
+                    log "${vm_name} is ready at ${vm_ip} after ${elapsed}s (host key pinned from ${disk_path})."
+                    echo "$vm_ip"
+                    return 0
+                fi
             fi
         fi
         sleep "$interval"
@@ -152,7 +168,7 @@ wait_for_vm() {
         log "  ... ${elapsed}s elapsed, retrying..."
     done
 
-    die "${vm_name} never became ready within ${max_wait}s."
+    die "${vm_name} never became ready within ${max_wait}s (host key must be readable from ${disk_path})."
 }
 
 # Provision a single VM for install testing
@@ -208,6 +224,10 @@ destroy_single_vm() {
     log "Destroying ${vm_name}..."
     virsh destroy "${vm_name}" 2>/dev/null || true
     virsh undefine "${vm_name}" --remove-all-storage 2>/dev/null || true
+    # The guest's host keys die with the VM; a re-provision under the
+    # same name generates new ones, so the stale pin file must go (TASK-0008,
+    # Omega finding 1).
+    rm -f "$(vm_pin_file "${vm_name}")"
     log "${vm_name} destroyed."
 }
 

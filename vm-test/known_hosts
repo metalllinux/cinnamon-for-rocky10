@@ -1,0 +1,36 @@
+# vm-test/known_hosts — pinned host keys for the test harness.
+#
+# TASK-0008, Omega finding 1 (high): every ssh/scp/rsync channel in the
+# harness must run with StrictHostKeyChecking=yes against a pinned file.
+# See ssh_pin_opts() in vm-test/lib.sh for the mechanics.
+#
+# This file pins the bare-metal target by IP. The key material was
+# recorded one-time (human TOFU) with ssh-keyscan before first contact
+# on 2026-08-30; the fingerprints were recorded in the TASK-0008
+# planning doc (Big's checkpoint 2 in ## Test Results) and re-verified
+# against that record when this file was committed:
+#   RSA-3072  SHA256:OxbuXvwVOoYM017va5yZQ4b8907VHI/Tw7VmBhevXZ0
+#   ECDSA     SHA256:NAvJMVH7DOSWeJz/5fBXXiLXbZHCasrYx2YAmQsxq2c
+#   ED25519   SHA256:kAu+xhNLhmmJi65Rl6WpuyqdE8xJL/OxoJlzxi4T9qY
+#
+# VM targets are NOT pinned here. The cloud image ships no host keys;
+# every guest generates fresh ones on first boot (sshd-keygen@*.service),
+# so no VM key can be committed in advance. Instead the provisioner
+# seeds a per-VM pin file at vm-test/results/known-hosts/<vm-name>
+# (gitignored) by reading the keys out-of-band from the VM's own qcow2
+# image (cp + virt-cat, never over the network), and the connection is
+# pinned with -o HostKeyAlias=<vm-name> against that file. A VM without
+# a pin file is refused; the harness never falls back to
+# verification-off. To pin a target manually, add lines of the form
+#   <name-or-ip> <key-type> <base64-key>
+# using ssh-keyscan output, and connect to it by that name.
+#
+# If 192.168.1.103 is re-imaged, re-record its keys the same way:
+# ssh-keyscan, compare the new fingerprints against the last recorded
+# set with the human in the loop, then replace the lines below.
+
+# Bare-metal test host 192.168.1.103 (hostname silver), OpenSSH_9.9,
+# recorded 2026-08-30 (TOFU; fingerprints match the planning doc).
+192.168.1.103 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEfMag+dC5HhdGGUJ5J+bNRthTNwATEN6wFzxzJqXTb9
+192.168.1.103 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBB4X8YYXeLWsHBmmZjEvWwPjpEuRQdV9z2YFBC70wzMPuVnljRWw1sNij8LbQQ0yBlEsouD56i6X9VSH2A4FkrI=
+192.168.1.103 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCrux2Fyja9d1NI819NEUIsi1OmvH69CwHJKvtQ3dPj/urGDxsJ7cAiKup9YD6l2BsyizxILNUQ3mIvxdNKOoh6ncvoZJrgG8NB0bkD9odwR4bnPJs6AsqTlAdP3cXhr0z241KqfXynbcFjizscrWSz7lbZb/sxOT5iQAURt+ehzwfFIWdRs/lLQw/mOnBQ1s4dH/sTtle0lnl3f38+J0TVmH5Svdrnhjtk7VzbscSZkgpp+MhC6fhgXaf1DneVYdcyfAg9vt2b+8RTiHIFYhe6hRB8ZAgarJ4x5AboHcqQd/SSjJweMKm1reXCzX97BxD42RPWnd/CSfLI3sihf15ceJ9gwT9fqLO25PhZkjG/y83ayOOMqlM0A5A8VJycCYOXauOfm1qvMIaX5w1hT/H9AxU3QLGed0V1MjzwzD8p6dJpVwNoCU+F18QJWe1PEWZCGBrK2ybf4f/IIjYBF+UcGabLy6E36Ntv6GLKeso1FGgxzFfSNhA7s0lgKwVGvrM=

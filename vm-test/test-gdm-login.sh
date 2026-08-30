@@ -48,6 +48,16 @@
 #                        state by NIC MAC; host screenshots are skipped
 #                        (no QMP channel) and the a11y tree is the
 #                        observation channel.
+#
+# Host-key pinning (TASK-0008, Omega finding 1): every ssh/scp channel
+# in this harness runs with StrictHostKeyChecking=yes against a pinned
+# key file (see lib.sh). VMs provisioned by the harness get their pin
+# file seeded out-of-band from the disk image; with --attach the VM
+# must either already have a pin file (vm-test/results/known-hosts/
+# <name>) or keep its disk image at the standard path
+# /var/lib/libvirt/images/cinnamon-test/<name>.qcow2 so it can be
+# seeded. A target with neither is refused up front (fail-closed; the
+# harness has no verification-off fallback).
 #   --keep-vm            do not destroy the VM at the end
 #   --in-vm 'cmd'        run one command in the VM as root and exit
 #                        (iteration channel for driver development)
@@ -147,11 +157,23 @@ host_shot() {
 # try_ssh — poll SSH on an IP until it answers or the timeout passes.
 # Returns 0/1 without dying, so callers can try a second candidate
 # address (post-reboot DHCP re-resolution, orphan mode).
+#
+# Pinned (TASK-0008, Omega finding 1): each iteration seeds the per-VM
+# host-key pin file out-of-band from the disk image, then probes with
+# StrictHostKeyChecking=yes. A missing pin file (guest still booting,
+# or an unknown target without a disk) reads as "not ready yet" here
+# and the loop retries; the hard error is reserved for the non-wait
+# channels (ssh_cmd), where a missing pin file is a harness error.
 try_ssh() {
     local vm_ip="$1"
     local elapsed=0
     while [ "$elapsed" -lt "$SSH_MAX_WAIT" ]; do
-        if ssh_cmd "$vm_ip" "echo ready" >/dev/null 2>&1; then
+        if seed_vm_pin "${VM_NAME}" "${IMG_DIR}/${VM_NAME}.qcow2" \
+            && { ssh_pin_opts "$vm_ip"
+                 # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+                 ssh ${SSH_PIN_OPTS} -o ConnectTimeout=5 -o BatchMode=yes \
+                     -i "${SSH_KEY}" "${VM_USER}@${vm_ip}" \
+                     "echo ready" >/dev/null 2>&1; }; then
             return 0
         fi
         sleep "$SSH_CHECK_INTERVAL"
@@ -354,6 +376,14 @@ if [ "$ATTACH" = true ]; then
         log "Attaching to orphan VM ${VM_NAME} at ${ATTACH_IP} (no libvirt domain; screenshots and virsh reboot unavailable)."
         VM_IP="$ATTACH_IP"
     fi
+    # Fail-closed host-key check (TASK-0008, Omega finding 1): an
+    # attached VM must be pinnable — either its pin file already exists
+    # or its disk image is available for out-of-band seeding. A target
+    # with neither is refused up front instead of timing out in
+    # wait_for_ssh.
+    if [ ! -f "$(vm_pin_file "${VM_NAME}")" ] && [ ! -f "${IMG_DIR}/${VM_NAME}.qcow2" ]; then
+        die "cannot pin the host key of ${VM_NAME} at ${VM_IP}: no pin file at $(vm_pin_file "${VM_NAME}") and no disk image at ${IMG_DIR}/${VM_NAME}.qcow2 to seed from. Create the pin file manually (format in the header of ${KNOWN_HOSTS_FILE}); the harness never connects with host-key verification off."
+    fi
     wait_for_ssh "$VM_IP"
     record_phase PASS provision "attached to existing VM at ${VM_IP}"
 else
@@ -374,7 +404,9 @@ log "VNC display: ${VNC_DISPLAY}"
 
 ssh_cmd "$VM_IP" "mkdir -p ${REMOTE_HARNESS_DIR}"
 for f in "${HARNESS_FILES[@]}"; do
-    scp -o StrictHostKeyChecking=no -i "${SSH_KEY}" \
+    ssh_pin_opts "$VM_IP"
+    # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+    scp ${SSH_PIN_OPTS} -i "${SSH_KEY}" \
         "$f" "${VM_USER}@${VM_IP}:${REMOTE_HARNESS_DIR}/" >/dev/null \
         || die "scp failed for ${f}"
 done
@@ -516,7 +548,9 @@ fi
 # --- Phase 6: INSTALL.md install (repo method, the user's procedure) ---
 
 log "Phase 6: copy rpms/ + repo-setup/ and run the INSTALL.md install..."
-scp -o StrictHostKeyChecking=no -i "${SSH_KEY}" \
+ssh_pin_opts "$VM_IP"
+# shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+scp ${SSH_PIN_OPTS} -i "${SSH_KEY}" \
     -r "${PROJECT_DIR}/rpms" "${PROJECT_DIR}/repo-setup" \
     "${VM_USER}@${VM_IP}/root/" >/dev/null \
     || die "scp of rpms/ + repo-setup/ failed"
@@ -661,7 +695,9 @@ host_shot 04-post-cinnamon-attempt
 # --- Phase 9: collect evidence back to the host ---
 
 log "Phase 9: collecting evidence to ${RESULTS_DIR}/evidence/..."
-scp -o StrictHostKeyChecking=no -i "${SSH_KEY}" \
+ssh_pin_opts "$VM_IP"
+# shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+scp ${SSH_PIN_OPTS} -i "${SSH_KEY}" \
     -r "${VM_USER}@${VM_IP}:/root/evidence" "${RESULTS_DIR}/" >/dev/null 2>&1 \
     || { record_phase FAIL evidence "scp of /root/evidence failed"; write_summary; exit 1; }
 EVIDENCE_COUNT="$(find "${RESULTS_DIR}/evidence" -type f | wc -l)"

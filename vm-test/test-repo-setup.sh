@@ -73,6 +73,10 @@ destroy_vm() {
     virsh destroy "${VM_NAME}" 2>/dev/null || true
     virsh undefine "${VM_NAME}" --remove-all-storage 2>/dev/null || true
     rm -f "$DISK_PATH"
+    # The guest's host keys die with the VM; a re-provision under the
+    # same name generates new ones, so the stale pin file must go with
+    # the disk (TASK-0008, Omega finding 1).
+    rm -f "$(vm_pin_file "${VM_NAME}")"
     log "VM destroyed."
 }
 
@@ -81,18 +85,27 @@ wait_for_ssh() {
     local elapsed=0
     log "Waiting for SSH on ${vm_ip} (timeout: ${SSH_MAX_WAIT}s)..."
     while [ "$elapsed" -lt "$SSH_MAX_WAIT" ]; do
-        if ssh -o StrictHostKeyChecking=no \
-           -o ConnectTimeout=5 -o BatchMode=yes \
-           -i "${SSH_KEY}" "${VM_USER}@${vm_ip}" \
-           "echo ready" >/dev/null 2>&1; then
-            log "SSH ready on ${vm_ip} after ${elapsed}s."
-            return 0
+        # Pinned first contact (TASK-0008, Omega finding 1): seed the
+        # per-VM host-key pin file out-of-band from the disk image,
+        # then probe with StrictHostKeyChecking=yes. A missing pin
+        # file while the guest is still booting reads as "not ready
+        # yet" and the loop retries (see lib.sh).
+        if seed_vm_pin "${VM_NAME}" "$DISK_PATH"; then
+            ssh_pin_opts "$vm_ip"
+            # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+            if ssh ${SSH_PIN_OPTS} \
+                   -o ConnectTimeout=5 -o BatchMode=yes \
+                   -i "${SSH_KEY}" "${VM_USER}@${vm_ip}" \
+                   "echo ready" >/dev/null 2>&1; then
+                log "SSH ready on ${vm_ip} after ${elapsed}s (host key pinned from ${DISK_PATH})."
+                return 0
+            fi
         fi
         sleep "$SSH_CHECK_INTERVAL"
         elapsed=$((elapsed + SSH_CHECK_INTERVAL))
         log "  ... ${elapsed}s elapsed..."
     done
-    die "SSH never ready on ${vm_ip} within ${SSH_MAX_WAIT}s."
+    die "SSH never ready on ${vm_ip} within ${SSH_MAX_WAIT}s (host key must be readable from ${DISK_PATH})."
 }
 
 provision_vm() {
@@ -261,13 +274,17 @@ test_vm_repo_setup() {
     # Copy repo-setup/ directory to VM
     log "Copying repo-setup/ to VM..."
     ssh_cmd "$vm_ip" "mkdir -p /root/cinnamon-for-rocky10"
-    rsync -avz -e "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY}" \
+    ssh_pin_opts "$vm_ip"
+    # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+    rsync -avz -e "ssh ${SSH_PIN_OPTS} -i ${SSH_KEY}" \
         "${PROJECT_DIR}/repo-setup/" \
         "root@${vm_ip}:/root/cinnamon-for-rocky10/repo-setup/" 2>&1 | tail -3
 
     # Copy rpms/ directory to VM (only RPMs and repodata, not everything)
     log "Copying rpms/ to VM..."
-    rsync -avz -e "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY}" \
+    ssh_pin_opts "$vm_ip"
+    # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+    rsync -avz -e "ssh ${SSH_PIN_OPTS} -i ${SSH_KEY}" \
         "${PROJECT_DIR}/rpms/" \
         "root@${vm_ip}:/root/cinnamon-for-rocky10/rpms/" 2>&1 | tail -3
 
