@@ -12,7 +12,9 @@
 #   5. Installs cinnamon via the local repository
 #   6. Verifies all 14 base packages are installed at expected versions
 #   7. Runs binary verification (ldd + version checks)
-#   8. Tests error handling edge cases (on the host, not the VM)
+#   8. Tests error handling edge cases (on the host, not the VM),
+#      asserting that the root error path leaves no host state change
+#      (statelessness contract, TASK-0008 Omega medium finding)
 #
 # Results are written to vm-test/results/repo-setup.log
 
@@ -209,9 +211,40 @@ test_error_handling() {
         fi
     fi
 
-    # Test 3: Missing rpms/ directory should fail with clear error
+    # Test 3: Missing rpms/ directory should fail with clear error.
+    #
+    # Omega finding (medium, TASK-0008): this runs the REAL script as
+    # root on this host. Its safety today rests on the script dying at
+    # project-root resolution (setup-repo.sh: cd -P under set -euo
+    # pipefail) before the root check and every state-changing step —
+    # an ordering that was never asserted, so one refactor (moving the
+    # root check first) would make this test perform the full setup as
+    # root on the host: dnf install createrepo_c, createrepo_c over
+    # rpms/ (gitignored repodata/ in the working tree), a host repo
+    # file, CRB enabled. The statelessness is therefore asserted, not
+    # assumed: the host state is snapshotted before the root run and
+    # verified unchanged after it.
     log "Testing missing rpms/ directory rejection..."
     local missing_rpms_output
+    local state_marker state_before state_after
+    state_marker=$(mktemp)
+    state_before="$(
+        {
+            if rpm -q --quiet createrepo_c 2>/dev/null; then
+                echo "createrepo_c:installed"
+            else
+                echo "createrepo_c:absent"
+            fi
+            if [ -e /etc/yum.repos.d/cinnamon-rocky10.repo ]; then
+                echo "cinnamon-rocky10.repo:present"
+            else
+                echo "cinnamon-rocky10.repo:absent"
+            fi
+            # All repo files: catches the cinnamon-rocky10.repo write
+            # and a CRB enable (config-manager edits the CRB .repo).
+            find /etc/yum.repos.d -maxdepth 1 -name '*.repo' -type f -exec md5sum {} + 2>/dev/null
+        } | sort
+    )"
     if missing_rpms_output=$(sudo bash "${PROJECT_DIR}/repo-setup/setup-repo.sh" /tmp/nonexistent-dir-$(date +%s) 2>&1 || true); then
         if echo "$missing_rpms_output" | grep -qiE "not found|No such file"; then
             record "Missing rpms/ rejection" "PASS" "correctly rejects missing directory"
@@ -224,6 +257,42 @@ test_error_handling() {
         else
             record "Missing rpms/ rejection" "FAIL" "unexpected error (output: ${missing_rpms_output})"
         fi
+    fi
+    # Statelessness check (Omega finding): the root run above must have
+    # changed nothing on this host. The dnf metadata cache is
+    # deliberately not asserted: it is transient by design and is
+    # rewritten by any concurrent dnf activity.
+    state_after="$(
+        {
+            if rpm -q --quiet createrepo_c 2>/dev/null; then
+                echo "createrepo_c:installed"
+            else
+                echo "createrepo_c:absent"
+            fi
+            if [ -e /etc/yum.repos.d/cinnamon-rocky10.repo ]; then
+                echo "cinnamon-rocky10.repo:present"
+            else
+                echo "cinnamon-rocky10.repo:absent"
+            fi
+            find /etc/yum.repos.d -maxdepth 1 -name '*.repo' -type f -exec md5sum {} + 2>/dev/null
+        } | sort
+    )"
+    # Any file created or modified under the working tree's rpms/ by
+    # the root run (the gitignored repodata/ is the one a stateful
+    # regression would write).
+    local rpms_modified
+    rpms_modified="$(find "${PROJECT_DIR}/rpms" -type f -newer "$state_marker" 2>/dev/null || true)"
+    rm -f "$state_marker"
+    if [ "$state_before" = "$state_after" ] && [ -z "$rpms_modified" ]; then
+        record "Error-path statelessness" "PASS" "root run left no host state change (createrepo_c, repo files, rpms/)"
+    else
+        record "Error-path statelessness" "FAIL" "host state changed by the error-path run (diff on stderr)"
+        {
+            diff <(printf '%s\n' "$state_before") <(printf '%s\n' "$state_after") || true
+            if [ -n "$rpms_modified" ]; then
+                printf 'modified/created under rpms/:\n%s\n' "$rpms_modified"
+            fi
+        } >&2
     fi
 
     # Test 4: .repo template exists
