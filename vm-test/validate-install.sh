@@ -185,6 +185,9 @@ provision_single_vm() {
 
     # Check prerequisites
     [ -f "$cloud_image" ] || die "Cloud image not found at ${cloud_image}"
+    # Key hygiene before the fleet key is injected into the VM
+    # (TASK-0008, Omega finding 2).
+    assert_ssh_key "${SSH_KEY}"
     [ -f "${SSH_KEY}.pub" ] || die "SSH key not found at ${SSH_KEY}.pub"
 
     # Copy cloud image

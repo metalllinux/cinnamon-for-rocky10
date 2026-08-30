@@ -52,6 +52,11 @@ check_prereqs() {
         command -v "$cmd" >/dev/null 2>&1 || die "'$cmd' not found"
     done
     [ -f "$CLOUD_IMAGE" ] || die "Cloud image not found at $CLOUD_IMAGE"
+    # Key hygiene before the key is injected into a VM (TASK-0008,
+    # Omega finding 2): the fleet key is the root credential for every
+    # VM it is injected into, so a world/group-readable copy is a
+    # standing leak.
+    assert_ssh_key "${SSH_KEY}"
     [ -f "${SSH_KEY}.pub" ] || die "SSH public key not found at ${SSH_KEY}.pub. Run: ssh-keygen -t ed25519 -f ~/.ssh/cinnamon-test-key -N ''"
 }
 

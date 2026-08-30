@@ -11,6 +11,20 @@
 #   - Omega HIGH (TASK-0008): every ssh/scp/rsync channel pinned against
 #     vm-test/known_hosts (see the pinning section below); no channel in
 #     the harness runs with host-key verification off
+#   - Omega MEDIUM (TASK-0008): assert_ssh_key refuses a private key
+#     that is group/world readable or owned by another user; the
+#     bare-metal host gets its own dedicated key (BAREMETAL_KEY), never
+#     the fleet key
+#
+# Credential blast radius (TASK-0008, Omega finding 2): SSH_KEY
+# (default ~/.ssh/cinnamon-test-key) is the FLEET key — it is injected
+# into every test VM at provision time and is root in all of them. One
+# stolen copy of it opens the whole VM fleet; there is no per-target
+# revocation short of re-provisioning. It must NOT be copied to any
+# physical host: the bare-metal test host (BAREMETAL_HOST) is accessed
+# with its own dedicated key (BAREMETAL_KEY) as BAREMETAL_USER. Keep
+# both keys mode 600 and owned by the invoking user; assert_ssh_key
+# enforces that on every channel.
 
 # --- Guard: must be sourced, not executed ---
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
@@ -62,8 +76,13 @@ KNOWN_HOSTS_FILE="${VM_TEST_DIR}/known_hosts"
 # Per-VM pin files, seeded at provision time. Under results/ so they
 # are gitignored (they are per-run key material, not source).
 VM_PIN_DIR="${VM_TEST_DIR}/results/known-hosts"
-# The bare-metal host the harness drives besides the VMs.
+# The bare-metal host the harness drives besides the VMs. It is
+# accessed with a dedicated key as a non-root user (passwordless sudo
+# is available there); the fleet key must not open this machine
+# (TASK-0008, Omega finding 2).
 BAREMETAL_HOST="192.168.1.103"
+BAREMETAL_USER="howard"
+BAREMETAL_KEY="${HOME}/.ssh/baremetal-103"
 
 # vm_pin_file VM_NAME — path of the per-VM pinned host-key file.
 vm_pin_file() {
@@ -132,15 +151,59 @@ ssh_pin_opts() {
 
 # --- Shared functions ---
 
+# assert_ssh_key KEY_PATH — on-disk hygiene of a private key is a
+# harness invariant (TASK-0008, Omega finding 2): the key must exist,
+# be owned by the invoking user, and not be group/world readable (mode
+# 600 is the standard; 400 is accepted — ssh requires the same).
+# Checked once per key per process; exits 1 with an actionable message
+# on failure.
+assert_ssh_key() {
+    local key="$1"
+    local checked="${_SSH_KEY_CHECKED:-}"
+    case " ${checked} " in
+        *" ${key} "*) return 0 ;;
+    esac
+    [ -f "$key" ] || { echo "[lib] ERROR: SSH private key not found at ${key}" >&2; exit 1; }
+    local mode owner
+    mode="$(stat -c '%a' "$key")"
+    owner="$(stat -c '%U' "$key")"
+    if [ $(( 0${mode} & 077 )) -ne 0 ]; then
+        echo "[lib] ERROR: SSH key ${key} is mode ${mode} (group/world readable)." >&2
+        echo "[lib] Fix: chmod 600 ${key}" >&2
+        exit 1
+    fi
+    if [ "$owner" != "$(id -un)" ]; then
+        echo "[lib] ERROR: SSH key ${key} is owned by ${owner}, not $(id -un)." >&2
+        echo "[lib] The harness refuses to use a key it does not own." >&2
+        exit 1
+    fi
+    _SSH_KEY_CHECKED="${checked} ${key}"
+}
+
 # SSH helper — uses key-based auth, pinned host-key verification.
 # Shared by all test scripts. ConnectTimeout=60 to accommodate
 # longer-running operations like binary verification and version checks
 # that may time out with the default 30s.
+#
+# Credentials are per target: VM targets use the fleet key as root;
+# the bare-metal host uses its dedicated key as BAREMETAL_USER
+# (TASK-0008, Omega finding 2). Commands for the bare-metal host run
+# as that non-root user — wrap root operations in 'sudo' (passwordless
+# sudo is available on that host).
 ssh_cmd() {
     local target="$1"; shift
+    local user key
+    if [ "$target" = "${BAREMETAL_HOST}" ]; then
+        user="${BAREMETAL_USER}"
+        key="${BAREMETAL_KEY}"
+    else
+        user="${VM_USER}"
+        key="${SSH_KEY}"
+    fi
+    assert_ssh_key "$key"
     ssh_pin_opts "$target"
     # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
-    ssh ${SSH_PIN_OPTS} -o ConnectTimeout=60 -i "${SSH_KEY}" "${VM_USER}@${target}" "$@"
+    ssh ${SSH_PIN_OPTS} -o ConnectTimeout=60 -i "${key}" "${user}@${target}" "$@"
 }
 
 # Resolve VM IP from libvirt DHCP leases using MAC-based lookup.
