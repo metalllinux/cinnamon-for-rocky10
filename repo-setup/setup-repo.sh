@@ -15,6 +15,15 @@
 #   5. Enable the CRB (CodeReady Builder) repository.
 #
 # Requires: sudo privileges, dnf, Rocky Linux 10 (or compatible).
+#
+# Statelessness contract (TASK-0008, Omega medium finding): with an
+# argument that does not name an existing directory, the script exits
+# at project-root resolution (the cd -P below, under set -euo pipefail)
+# BEFORE the root check and before every state-changing step. That
+# ordering is load-bearing: vm-test/test-repo-setup.sh runs exactly
+# this error path as root on the host and asserts that no host state
+# changed. Do not move any state-changing step above the project-root
+# resolution without updating that assertion.
 
 set -euo pipefail
 
