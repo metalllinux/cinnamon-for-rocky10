@@ -17,6 +17,10 @@ the connection target is derived from the gdm user's uid at run time.
 
 Dependencies: python3-dbus (EL10 baseos).
 
+The wait commands report the timeout cause on stderr: the target
+never appeared, or the a11y channel was broken (polls raising) —
+the two are different diagnostics (Shadow finding 9, TASK-0008).
+
 Usage:
   gdm-a11y.py tree [max-depth]     dump role/name/extents/state per node
   gdm-a11y.py text                 all non-empty node names, one per line
@@ -99,6 +103,17 @@ REGISTRY_NAME = "org.a11y.atspi.Registry"
 REGISTRY_PATH = "/org/a11y/atspi/accessible/root"
 
 
+class ChannelError(Exception):
+    """The a11y channel failed (bus connection or desktop listing).
+
+    Shadow finding 9 (TASK-0008): the wait commands treat a raising
+    channel as a poll failure and keep polling until the deadline —
+    a broken channel must be reported as such at timeout, not read
+    as "the node never appeared", and a transient blip (the greeter
+    still coming up) must not abort a wait on its first poll. The
+    non-wait commands exit with the message (main() converts it)."""
+
+
 def bus_address():
     import pwd
 
@@ -113,7 +128,8 @@ def connect():
     try:
         return dbus.bus.BusConnection(bus_address())
     except Exception as e:
-        sys.exit(f"gdm-a11y: cannot connect to a11y bus {bus_address()}: {e!r}")
+        raise ChannelError(
+            f"cannot connect to a11y bus {bus_address()}: {e!r}") from e
 
 
 def acc(bus, name, path):
@@ -200,7 +216,7 @@ def greeter_nodes(bus):
     try:
         apps = reg.GetChildren()
     except Exception as e:
-        sys.exit(f"gdm-a11y: cannot list a11y desktop: {e!r}")
+        raise ChannelError(f"cannot list a11y desktop: {e!r}") from e
     for app_name, app_path in apps:
         if node_role(bus, str(app_name), str(app_path)) != "application":
             continue
@@ -307,23 +323,47 @@ def cmd_has(args):
     sys.exit(0 if names_present(bus, args[0]) else 1)
 
 
+def wait_for(timeout, probe, what):
+    """Poll probe() (True = done) once per second until the deadline.
+
+    A raising probe is a channel failure, not a verdict (Shadow
+    finding 9, TASK-0008): it is remembered and counted, and polling
+    continues until the deadline. The timeout exit reports the two
+    causes separately so "channel broken" and "target absent" are
+    different diagnostics. Exits 0 when probe() returned True, 1 on
+    timeout."""
+    deadline = time.time() + timeout
+    failures = 0
+    last_err = None
+    while time.time() < deadline:
+        try:
+            if probe():
+                return
+        except SystemExit:
+            raise
+        except Exception as e:
+            failures += 1
+            last_err = e
+        time.sleep(1)
+    if failures:
+        sys.exit(
+            f"gdm-a11y: {what}: a11y channel broken during wait "
+            f"({failures} failed poll(s) in {timeout}s, last: "
+            f"{last_err!r}); the target may exist but could not be "
+            f"checked")
+    sys.exit(f"gdm-a11y: {what}: {timeout}s elapsed, target never appeared")
+
+
 def cmd_wait(args):
     if not args:
         sys.exit("usage: gdm-a11y.py wait <substring> [timeout]")
     needle = args[0]
     timeout = int(args[1]) if len(args) > 1 else 60
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        try:
-            bus = connect()
-            if names_present(bus, needle):
-                return
-        except SystemExit:
-            raise
-        except Exception:
-            pass
-        time.sleep(1)
-    sys.exit(1)
+
+    def probe():
+        return names_present(connect(), needle)
+
+    wait_for(timeout, probe, f"wait '{needle}'")
 
 
 def fmt_line(node):
@@ -359,20 +399,15 @@ def cmd_waitvis(args):
         sys.exit("usage: gdm-a11y.py waitvis <name> [timeout]")
     needle = args[0]
     timeout = int(args[1]) if len(args) > 1 else 60
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        try:
-            bus = connect()
-            n = match_node(bus, needle)
-            if n is not None and extents_visible(n[4]):
-                print(fmt_line(n))
-                return
-        except SystemExit:
-            raise
-        except Exception:
-            pass
-        time.sleep(1)
-    sys.exit(1)
+
+    def probe():
+        n = match_node(connect(), needle)
+        if n is not None and extents_visible(n[4]):
+            print(fmt_line(n))
+            return True
+        return False
+
+    wait_for(timeout, probe, f"waitvis '{needle}'")
 
 
 def cmd_waitvisrole(args):
@@ -380,20 +415,15 @@ def cmd_waitvisrole(args):
         sys.exit("usage: gdm-a11y.py waitvisrole <role> [timeout]")
     needle = args[0]
     timeout = int(args[1]) if len(args) > 1 else 60
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        try:
-            bus = connect()
-            n = match_role(bus, needle)
-            if n is not None and extents_visible(n[4]):
-                print(fmt_line(n))
-                return
-        except SystemExit:
-            raise
-        except Exception:
-            pass
-        time.sleep(1)
-    sys.exit(1)
+
+    def probe():
+        n = match_role(connect(), needle)
+        if n is not None and extents_visible(n[4]):
+            print(fmt_line(n))
+            return True
+        return False
+
+    wait_for(timeout, probe, f"waitvisrole '{needle}'")
 
 
 def cmd_findrolex(args):
@@ -417,20 +447,15 @@ def cmd_waitvisrolex(args):
         sys.exit("usage: gdm-a11y.py waitvisrolex <role> [timeout]")
     needle = args[0]
     timeout = int(args[1]) if len(args) > 1 else 60
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        try:
-            bus = connect()
-            n = match_rolex(bus, needle)
-            if n is not None and extents_visible(n[4]):
-                print(fmt_line(n))
-                return
-        except SystemExit:
-            raise
-        except Exception:
-            pass
-        time.sleep(1)
-    sys.exit(1)
+
+    def probe():
+        n = match_rolex(connect(), needle)
+        if n is not None and extents_visible(n[4]):
+            print(fmt_line(n))
+            return True
+        return False
+
+    wait_for(timeout, probe, f"waitvisrolex '{needle}'")
 
 
 def cmd_textof(args):
@@ -493,6 +518,16 @@ def main():
         sys.exit(__doc__)
     cmd = sys.argv[1]
     args = sys.argv[2:]
+    # Non-wait commands exit with the channel message; the wait
+    # commands catch ChannelError inside wait_for and never let it
+    # escape (Shadow finding 9, TASK-0008).
+    try:
+        _dispatch(cmd, args)
+    except ChannelError as e:
+        sys.exit(f"gdm-a11y: {e}")
+
+
+def _dispatch(cmd, args):
     if cmd == "tree":
         cmd_tree(args)
     elif cmd == "text":
