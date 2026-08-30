@@ -177,7 +177,9 @@ main() {
     if ! ssh_cmd "$vm_ip" "[ -d ${REMOTE_RPMS_DIR} ] && [ \"\$(ls ${REMOTE_RPMS_DIR}/*.rpm 2>/dev/null | wc -l)\" -gt 0 ]" 2>/dev/null; then
         log "Copying RPMs to VM (${REMOTE_RPMS_DIR})..."
         ssh_cmd "$vm_ip" "mkdir -p ${REMOTE_RPMS_DIR}"
-        scp -o StrictHostKeyChecking=no -i "${SSH_KEY}" \
+        ssh_pin_opts "$vm_ip"
+        # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+        scp ${SSH_PIN_OPTS} -i "${SSH_KEY}" \
             "$RPMS_DIR"/*.rpm "${VM_USER}@${vm_ip}:${REMOTE_RPMS_DIR}/" \
             2>&1 | tee -a "$STEP_INSTALL_LOG"
         log "RPMs copied."

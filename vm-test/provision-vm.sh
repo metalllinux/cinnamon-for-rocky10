@@ -19,6 +19,11 @@
 #   - VM_PASSWORD removed entirely — VM accessed via SSH keys only (no password auth)
 #   - Password no longer logged to stdout (was in "already exists" message)
 #   - virt-install --import does not pass credentials on command line
+#   - TASK-0008 (Omega finding 1, high): wait_for_ssh seeds the per-VM
+#     host-key pin file out-of-band from the disk image (see
+#     seed_vm_pin in lib.sh) and only then connects, with
+#     StrictHostKeyChecking=yes; no harness channel runs with host-key
+#     verification off
 
 set -euo pipefail
 
@@ -27,8 +32,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib.sh"
 
 # --- Provision-specific constants ---
+# (IMG_DIR comes from lib.sh: the wait loop seeds the per-VM host-key
+# pin file from the disk image, so both need the same location.)
 
-IMG_DIR="/var/lib/libvirt/images/cinnamon-test"
 CLOUD_IMAGE="${IMG_DIR}/Rocky-10-GenericCloud.qcow2"
 DISK_PATH="${IMG_DIR}/${VM_NAME}.qcow2"
 VCPUS=2
@@ -54,6 +60,10 @@ destroy_vm() {
     virsh destroy "${VM_NAME}" 2>/dev/null || true
     virsh undefine "${VM_NAME}" --remove-all-storage 2>/dev/null || true
     rm -f "$DISK_PATH"
+    # The guest's host keys die with the VM; a re-provision under the
+    # same name generates new ones, so the stale pin file must go with
+    # the disk (TASK-0008, Omega finding 1).
+    rm -f "$(vm_pin_file "${VM_NAME}")"
     log "VM destroyed."
 }
 
@@ -63,19 +73,30 @@ wait_for_ssh() {
     log "Waiting for SSH on ${vm_ip} (timeout: ${SSH_MAX_WAIT}s)..."
 
     while [ "$elapsed" -lt "$SSH_MAX_WAIT" ]; do
-        if ssh -o StrictHostKeyChecking=no \
-           -o ConnectTimeout=5 -o BatchMode=yes \
-           -i "${SSH_KEY}" "${VM_USER}@${vm_ip}" \
-           "echo ready" >/dev/null 2>&1; then
-            log "SSH is ready on ${vm_ip} after ${elapsed}s."
-            return 0
+        # Pinned first contact (TASK-0008, Omega finding 1): seed the
+        # per-VM host-key pin file out-of-band from the disk image.
+        # While the guest is still booting (sshd-keygen has not written
+        # the keys yet) the seed is a no-op and the loop retries; once
+        # the keys are in the image, every connection is pinned against
+        # them. An on-path attacker cannot answer the pinned probe with
+        # its own key, so the evidence chain starts authenticated.
+        if seed_vm_pin "${VM_NAME}" "$DISK_PATH"; then
+            ssh_pin_opts "$vm_ip"
+            # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+            if ssh ${SSH_PIN_OPTS} \
+                   -o ConnectTimeout=5 -o BatchMode=yes \
+                   -i "${SSH_KEY}" "${VM_USER}@${vm_ip}" \
+                   "echo ready" >/dev/null 2>&1; then
+                log "SSH is ready on ${vm_ip} after ${elapsed}s (host key pinned from ${DISK_PATH})."
+                return 0
+            fi
         fi
         sleep "$SSH_CHECK_INTERVAL"
         elapsed=$((elapsed + SSH_CHECK_INTERVAL))
         log "  ... ${elapsed}s elapsed, retrying..."
     done
 
-    die "SSH never became ready on ${vm_ip} within ${SSH_MAX_WAIT}s."
+    die "SSH never became ready on ${vm_ip} within ${SSH_MAX_WAIT}s (host key must be readable from ${DISK_PATH}; check that the VM is booting)."
 }
 
 # --- Main ---
@@ -128,6 +149,7 @@ main() {
         else
             log "VM '${VM_NAME}' not present; nothing to destroy."
             rm -f "$DISK_PATH"
+            rm -f "$(vm_pin_file "${VM_NAME}")"
         fi
         exit 0
     fi

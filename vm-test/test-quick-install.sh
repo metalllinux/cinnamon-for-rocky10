@@ -63,7 +63,9 @@ main() {
 
     log "Copying RPMs to VM (${REMOTE_RPMS_DIR})..."
     ssh_cmd "$vm_ip" "rm -rf ${REMOTE_RPMS_DIR} && mkdir -p ${REMOTE_RPMS_DIR}"
-    scp -o StrictHostKeyChecking=no -i "${SSH_KEY}" \
+    ssh_pin_opts "$vm_ip"
+    # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+    scp ${SSH_PIN_OPTS} -i "${SSH_KEY}" \
         "$RPMS_DIR"/*.rpm "${VM_USER}@${vm_ip}:${REMOTE_RPMS_DIR}/" \
         2>&1 | tee -a "$QUICK_INSTALL_LOG"
     log "RPMs copied."
