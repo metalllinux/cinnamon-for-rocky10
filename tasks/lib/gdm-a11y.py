@@ -513,8 +513,6 @@ def main():
         cmd_findrolex(args)
     elif cmd == "waitvisrolex":
         cmd_waitvisrolex(args)
-    elif cmd == "waiteditable":
-        cmd_waiteditable(args)
     elif cmd == "textof":
         cmd_textof(args)
     elif cmd == "textofext":
