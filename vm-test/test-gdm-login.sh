@@ -64,9 +64,12 @@
 #   -h, --help           this help
 #
 # Exit code: 0 when the harness completed both login attempts with
-# evidence (the Cinnamon verdict may be PASS or FAIL — that is the
-# result under test, not a harness error); 1 when a harness phase
-# failed before it could produce its evidence.
+# evidence and the teardown verified the VM is gone (the Cinnamon
+# verdict may be PASS or FAIL — that is the result under test, not a
+# harness error); 1 when a harness phase failed (a teardown that
+# cannot verify the VM is gone is a phase failure: the surviving
+# domain would read as "destroyed" and the next run starts from a
+# phantom state, Shadow finding 4, TASK-0008).
 
 set -euo pipefail
 
@@ -703,16 +706,31 @@ scp ${SSH_PIN_OPTS} -i "${SSH_KEY}" \
 EVIDENCE_COUNT="$(find "${RESULTS_DIR}/evidence" -type f | wc -l)"
 record_phase PASS evidence "${EVIDENCE_COUNT} files under ${RESULTS_DIR}/evidence/"
 
-write_summary
-
 # --- Teardown ---
 
 if [ "$KEEP_VM" = true ]; then
     log "Keeping VM ${VM_NAME} (IP ${VM_IP}, VNC ${VNC_DISPLAY})."
 else
     log "Destroying VM ${VM_NAME}..."
-    bash "${PROVISION_SCRIPT}" --destroy-only >/dev/null 2>&1 || true
-    record_phase PASS teardown "VM destroyed"
+    # Shadow finding 4 (TASK-0008): record PASS/FAIL from the rc of
+    # --destroy-only instead of `|| true`. provision-vm.sh now proves
+    # libvirt is reachable and verifies the domain (and disk) are
+    # actually gone before exiting 0, so a non-zero rc means the VM
+    # may still exist.
+    teardown_rc=0
+    teardown_out="$(bash "${PROVISION_SCRIPT}" --destroy-only 2>&1)" || teardown_rc=$?
+    if [ "$teardown_rc" -eq 0 ]; then
+        record_phase PASS teardown "VM destroyed"
+    else
+        domstate="$(virsh domstate "${VM_NAME}" 2>&1 || true)"
+        log "teardown output from provision-vm.sh --destroy-only:"
+        printf '%s\n' "$teardown_out" >&2
+        record_phase FAIL teardown "destroy rc=${teardown_rc} (domain state: ${domstate:-unknown}); VM may still exist"
+        write_summary
+        exit 1
+    fi
 fi
+
+write_summary
 
 log "=== run complete: ${RESULTS_DIR} ==="

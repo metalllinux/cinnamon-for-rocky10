@@ -148,13 +148,30 @@ main() {
 
     # --destroy-only: tear down and stop. Idempotent: a missing VM is a
     # success (the teardown path wants "gone", not "error").
+    #
+    # Shadow finding 4 (TASK-0008): the harness records its teardown
+    # verdict from this path's rc, so the rc must reflect the real end
+    # state. destroy_vm's virsh calls carry || true (idempotent
+    # re-runs), so a failed destroy would otherwise read as success.
+    # The end state is therefore verified, not assumed.
     if $destroy_only; then
+        # First prove libvirt is reachable at all: a permission failure
+        # on the system driver must not read as "VM not present".
+        virsh list --all >/dev/null 2>&1 || die "cannot query libvirt (virsh list --all failed); cannot verify the end state, so teardown is reported as failed"
         if virsh domstate "${VM_NAME}" >/dev/null 2>&1; then
             destroy_vm
         else
             log "VM '${VM_NAME}' not present; nothing to destroy."
             rm -f "$DISK_PATH"
             rm -f "$(vm_pin_file "${VM_NAME}")"
+        fi
+        # Verify the domain is actually gone (the || true calls above
+        # swallow a failed destroy/undefine).
+        if virsh domstate "${VM_NAME}" >/dev/null 2>&1; then
+            die "VM '${VM_NAME}' still present after destroy (domstate: $(virsh domstate "${VM_NAME}" 2>&1 || true))"
+        fi
+        if [ -e "$DISK_PATH" ]; then
+            die "disk ${DISK_PATH} still present after destroy"
         fi
         exit 0
     fi
