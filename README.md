@@ -53,7 +53,7 @@ See [INSTALL.md](INSTALL.md) for step-by-step RPM installation on a fresh Rocky 
 spec/              - RPM spec files (EL10 adapted)
 rpms/              - Built RPM packages
 src/               - Source code references
-vm-test/           - VM testing harness and test scripts
+vm-test/           - VM testing harness, test scripts, and reference VM setup
 INSTALL.md         - Installation instructions
 ```
 
