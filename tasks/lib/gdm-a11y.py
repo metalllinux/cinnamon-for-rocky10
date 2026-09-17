@@ -15,7 +15,14 @@ ukey(1) (uinput); this tool never sends input.
 The greeter's tree lives on the gdm user's a11y bus, not the caller's:
 the connection target is derived from the gdm user's uid at run time, or
 from $A11Y_USER when set (TASK-0017: the logged-in session user's bus,
-i.e. the Cinnamon shell tree, is reached the same way).
+i.e. the Cinnamon shell tree, is reached the same way). Which
+application is walked is the greeter's shell by default; $A11Y_APP
+overrides the app node name (TASK-0017: in a Cinnamon session the
+terminal is its own app node, org.gnome.Terminal, not a child of the
+shell). An exact app-name match wins; when nothing matches exactly, a
+case-insensitive substring match with . and - treated as equivalent
+separators applies, so A11Y_APP=gnome-terminal finds
+org.gnome.Terminal.
 
 Dependencies: python3-dbus (EL10 baseos).
 
@@ -236,19 +243,41 @@ def walk(bus, name, path, depth=0, max_depth=16, out=None):
 
 
 def greeter_nodes(bus):
-    """Walk only the gnome-shell (greeter) application."""
+    """Walk the application selected by A11Y_APP (default 'gnome-shell',
+    the greeter's shell app). In a logged-in Cinnamon session the shell
+    app node is 'cinnamon' and other apps (e.g. the terminal,
+    org.gnome.Terminal) are separate top-level app nodes, so the default
+    sees nothing there: A11Y_APP=gnome-terminal selects the terminal for
+    tree/text/has/wait. An exact app-name match wins; when nothing
+    matches exactly, a case-insensitive substring match with . and -
+    treated as equivalent separators applies, so A11Y_APP=gnome-terminal
+    finds org.gnome.Terminal. An app that is not (yet) registered
+    yields an empty result, which the wait commands treat as 'target
+    never appeared' (same semantics as a missing greeter node)."""
+    import os
+
     reg = acc(bus, REGISTRY_NAME, REGISTRY_PATH)
     nodes = []
     try:
         apps = reg.GetChildren()
     except Exception as e:
         raise ChannelError(f"cannot list a11y desktop: {e!r}") from e
+    wanted = os.environ.get("A11Y_APP", "gnome-shell")
+    app_nodes = []
     for app_name, app_path in apps:
-        if node_role(bus, str(app_name), str(app_path)) != "application":
+        name, path = str(app_name), str(app_path)
+        if node_role(bus, name, path) != "application":
             continue
-        if node_name(bus, str(app_name), str(app_path)) != "gnome-shell":
-            continue
-        walk(bus, str(app_name), str(app_path), 0, 16, nodes)
+        app_nodes.append((name, path, node_name(bus, name, path)))
+    chosen = [ap for ap in app_nodes if ap[2] == wanted]
+    if not chosen:
+        def norm(s):
+            return s.lower().replace(".", "").replace("-", "")
+
+        needle = norm(wanted)
+        chosen = [ap for ap in app_nodes if needle in norm(ap[2])]
+    for name, path, _nm in chosen:
+        walk(bus, name, path, 0, 16, nodes)
     return nodes
 
 
