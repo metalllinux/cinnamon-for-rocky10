@@ -124,6 +124,8 @@ static const struct {
     { "Right",      KEY_RIGHT },
     { "Home",       KEY_HOME },
     { "End",        KEY_END },
+    { "Super_L",    KEY_LEFTCTRL },   /* Windows/Meta key: Cinnamon menu */
+    { "Super_R",    KEY_RIGHTCTRL },
     { "F1", KEY_F1 },  { "F2", KEY_F2 },  { "F3", KEY_F3 },
     { "F4", KEY_F4 },  { "F5", KEY_F5 },  { "F6", KEY_F6 },
     { "F7", KEY_F7 },  { "F8", KEY_F8 },  { "F9", KEY_F9 },
