@@ -1,6 +1,6 @@
 Name:           cinnamon
 Version:        6.7.4
-Release:        1.el10
+Release:        3.el10
 Summary:        GNOME desktop environment fork providing the Cinnamon experience
 
 License:        GPLv2+ and LGPL2+
@@ -39,6 +39,16 @@ BuildRequires:  systemd-devel
 BuildRequires:  python3-devel
 BuildRequires:  gtk4-devel
 BuildRequires:  gettext
+
+# Runtime dependencies of the Python settings app (cinnamon-settings.py),
+# which ships in this package. The app imports all three unguarded; Fedora
+# carries the same three Requires on the cinnamon package (verified on the
+# Fedora 44 reference).
+Requires:       python3-setproctitle
+Requires:       python3-pillow
+Requires:       python3-tinycss2
+# cinnamon-settings imports xapp (bin/SettingsWidgets.py:10, xapp.os:33)
+Requires:       python3-xapp
 
 %description
 Cinnamon is a desktop environment which provides advanced innovative
@@ -153,6 +163,14 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %{python3_sitelib}/cinnamon/
 
 %changelog
+* Thu Sep 17 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-3.el10
+- Also require python3-xapp: cinnamon-settings imports xapp at
+  bin/SettingsWidgets.py:10 and xapp.os at cinnamon-settings.py:33
+  (TASK-0017)
+* Thu Sep 17 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-2.el10
+- Require python3-setproctitle, python3-pillow, python3-tinycss2 for the
+  Python settings app (cinnamon-settings); matches the Fedora package
+  (TASK-0017)
 * Sun Aug 10 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-1
 - Initial port to Rocky Linux 10
 - Patches for gcr-4 API compatibility
