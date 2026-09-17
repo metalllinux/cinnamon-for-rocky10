@@ -1,0 +1,44 @@
+--- a/libcinnamon-desktop/gnome-bg.c	2026-09-17 01:52:42.577942127 +0900
++++ b/libcinnamon-desktop/gnome-bg.c	2026-09-17 01:52:42.577942127 +0900
+@@ -1855,15 +1855,38 @@
+         cairo_destroy (cr);
+     } else {
+         gint scale = gtk_widget_get_scale_factor (GTK_WIDGET (image));
++        cairo_t *cr;
+ 
+         pixbuf = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8,
+                                  width * scale, height * scale);
+         gnome_bg_draw (bg, pixbuf, window ? gdk_window_get_screen (window) : gdk_screen_get_default (), FALSE);
+-        surface = gdk_cairo_surface_create_from_pixbuf (pixbuf,
+-                                                        scale,
+-                                                        window);
+         pixbuf_average_value (pixbuf, &average);
+ 
++        /* Render the pixbuf onto a window-similar surface -- the same
++         * mechanism the solid-color branch above uses -- instead of
++         * gdk_cairo_surface_create_from_pixbuf(). A pixbuf-derived surface
++         * does not composite on the gtk-layer-shell / Wayland desktop and
++         * leaves the background black, whereas a window-similar surface
++         * painted with cairo renders correctly.
++         */
++        if (window != NULL)
++            surface = gdk_window_create_similar_image_surface (window,
++                                                               CAIRO_FORMAT_ARGB32,
++                                                               width * scale, height * scale, 0);
++        else
++            surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
++                                                  width * scale, height * scale);
++
++        if (surface == NULL) {
++            g_object_unref (pixbuf);
++            return;
++        }
++
++        cr = cairo_create (surface);
++        gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
++        cairo_paint (cr);
++        cairo_destroy (cr);
++
+         g_object_unref (pixbuf);
+     }
+ 

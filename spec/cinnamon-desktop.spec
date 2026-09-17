@@ -1,11 +1,17 @@
 Name:           cinnamon-desktop
 Version:        6.7.2
-Release:        1.el10
+Release:        2.el10
 Summary:        Cinnamon desktop utility library
 
 License:        GPLv2+ and LGPL2+
 URL:            https://github.com/linuxmint/cinnamon-desktop
-Source0:        cinnamon-desktop-6.7.2.tar.gz
+Source0:        %{name}-%{version}.tar.gz
+# TASK-0017: render the wallpaper pixbuf onto a window-similar surface so it
+# composites on the gtk-layer-shell / Wayland desktop (the pixbuf-derived
+# surface from gdk_cairo_surface_create_from_pixbuf renders black).
+Patch0:         gnome-bg-wayland-surface.patch
+
+%global debug_package %{nil}
 
 BuildRequires:  meson >= 0.56.0
 BuildRequires:  ninja-build
@@ -42,25 +48,28 @@ Development files for %{name}.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
-meson setup builddir --prefix=%{_prefix} --libdir=%{_libdir} \
+meson setup builddir \
+    --prefix=%{_prefix} \
+    --libdir=%{_libdir} \
+    --buildtype=plain \
     -Dsystemd=enabled \
     -Ddeprecation_warnings=false
-ninja -C builddir
+ninja -C builddir -j2
 
 %install
-DESTDIR=%{buildroot} meson install -C builddir
-%find_lang %{name}
+DESTDIR=%{buildroot} ninja -C builddir install
+: %find_lang %{name} || :
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
 
-%files -f %{name}.lang
+%files
 %{_libdir}/libcinnamon-desktop.so.4*
-%{_libdir}/libcinnamon-desktop.so
 %{_libdir}/libcvc.so.0*
-%{_libdir}/libcvc.so
+%{_datadir}/locale
 %{_libdir}/girepository-1.0/CDesktopEnums-3.0.typelib
 %{_libdir}/girepository-1.0/CinnamonDesktop-3.0.typelib
 %{_libdir}/girepository-1.0/Cvc-1.0.typelib
@@ -74,7 +83,13 @@ DESTDIR=%{buildroot} meson install -C builddir
 %{_includedir}/cinnamon-desktop
 %{_libdir}/pkgconfig/cinnamon-desktop.pc
 %{_libdir}/pkgconfig/cvc.pc
+%{_libdir}/libcinnamon-desktop.so
+%{_libdir}/libcvc.so
 
 %changelog
+* Thu Sep 17 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-2
+- TASK-0017: fix black wallpaper on Wayland by rendering the pixbuf onto a
+  window-similar surface (gnome-bg-wayland-surface.patch)
+
 * Sun Aug 09 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-1
 - Initial port to Rocky Linux 10 from Fedora spec
