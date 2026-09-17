@@ -108,6 +108,8 @@ dnf install -y \
     clutter \
     cogl \
     gsettings-desktop-schemas \
+    rocky-backgrounds \
+    rocky-logos \
     2>&1 || echo "WARNING: Some system dependencies failed to install"
 
 echo "=== System dependencies installed ==="
@@ -218,6 +220,7 @@ EXPECTED=(
     "cinnamon-control-center"
     "nemo"
     "cinnamon"
+    "gnome-terminal"
 )
 
 ALL_OK=true
