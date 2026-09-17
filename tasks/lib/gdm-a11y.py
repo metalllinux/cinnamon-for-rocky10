@@ -13,7 +13,9 @@ evidence (failure-dialog wording per plan A4). Input is sent by
 ukey(1) (uinput); this tool never sends input.
 
 The greeter's tree lives on the gdm user's a11y bus, not the caller's:
-the connection target is derived from the gdm user's uid at run time.
+the connection target is derived from the gdm user's uid at run time, or
+from $A11Y_USER when set (TASK-0017: the logged-in session user's bus,
+i.e. the Cinnamon shell tree, is reached the same way).
 
 Dependencies: python3-dbus (EL10 baseos).
 
@@ -115,21 +117,45 @@ class ChannelError(Exception):
 
 
 def bus_address():
+    import os
     import pwd
 
+    # Default: the GDM greeter user's a11y bus. The TASK-0017 parity
+    # work needs the logged-in session user's bus (the Cinnamon shell
+    # tree), so A11Y_USER overrides the target. The a11y bus lives in
+    # the owning user's runtime dir, so the override is a user name,
+    # not a path.
+    user = os.environ.get("A11Y_USER", "gdm")
     try:
-        uid = pwd.getpwnam("gdm").pw_uid
+        uid = pwd.getpwnam(user).pw_uid
     except KeyError:
-        sys.exit("gdm-a11y: no gdm user on this system")
+        sys.exit(f"gdm-a11y: no such user '{user}' on this system")
     return f"unix:path=/run/user/{uid}/at-spi/bus"
 
 
 def connect():
-    try:
-        return dbus.bus.BusConnection(bus_address())
-    except Exception as e:
-        raise ChannelError(
-            f"cannot connect to a11y bus {bus_address()}: {e!r}") from e
+    # The at-spi daemon may name its socket 'bus' (greeter, verified
+    # TASK-0008) or a suffixed 'bus_N' (session user, observed
+    # 'bus_0' on the Cinnamon VM in TASK-0017). Try the plain name
+    # first, then the numbered sockets in order.
+    import glob
+    import os
+
+    base = bus_address().replace("unix:path=", "")
+    candidates = [base]
+    for extra in sorted(glob.glob(base + "_*")):
+        candidates.append(extra)
+    last = None
+    for cand in candidates:
+        if not os.path.exists(cand):
+            continue
+        try:
+            return dbus.bus.BusConnection(f"unix:path={cand}")
+        except Exception as e:
+            last = e
+    raise ChannelError(
+        f"cannot connect to a11y bus at {base} or suffixed variants: "
+        f"{last!r}") from last
 
 
 def acc(bus, name, path):

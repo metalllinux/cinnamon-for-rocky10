@@ -1,0 +1,228 @@
+
+### OS-VM
+KEY: PRETTY_NAME: Rocky Linux 10.2 (Red Quartz)
+KEY: HOSTNAME: localhost.localdomain
+KEY: KERNEL: 6.12.0-211.16.1.el10_2.0.1.x86_64
+KEY: INVENTORY_USER: gdmtest (uid 1000)
+KEY: UPTIME: up 4 days, 23 hours, 11 minutes
+
+### STACK
+KEY: CINNEMON_STACK:
+    cinnamon-6.7.4-1.el10.x86_64
+    cinnamon-control-center-6.7.2-1.el10.x86_64
+    cinnamon-desktop-6.7.2-2.el10.x86_64
+    cinnamon-menus-6.7.0-1.el10.x86_64
+    cinnamon-rocky-defaults-1.0-1.el10.noarch
+    cinnamon-session-6.7.3-1.el10.x86_64
+    cinnamon-settings-daemon-6.7.2-2.el10.x86_64
+    cjs-6.4.0-1.el10.x86_64
+    gdk-pixbuf2-2.42.12-4.el10_1.5.x86_64
+    gdk-pixbuf2-modules-2.42.12-4.el10_1.5.x86_64
+    gdk-pixbuf-parsers-2.42.12-1.el10.x86_64
+    gtk-layer-shell-0.10.1-1.el10.x86_64
+    mozjs115-115.29.0-1.el10.x86_64
+    mozjs115-devel-115.29.0-1.el10.x86_64
+    muffin-6.7.4-3.el10.x86_64
+    muffin-clutter-6.7.4-3.el10.x86_64
+    muffin-cogl-6.7.4-3.el10.x86_64
+    nemo-6.7.4-2.el10.x86_64
+    xapps-lib-3.3.3-1.el10.x86_64
+KEY: CINNAMON_VERSION: Cinnamon 6.7.4
+KEY: NEMO_VERSION: nemo 6.7.4
+
+### SESSION
+KEY: SESSION_ID: 426
+KEY: SESSION_TYPE: wayland
+KEY: GDMSESSION: n/a (no session env in this shell)
+KEY: SESSION_PROCESSES:
+    gdmtest  cinnamon
+    gdmtest  cinnamon-sessio
+    gdmtest  gdm-wayland-ses
+    gdmtest  nemo-desktop
+KEY: SCREENSHOT_STAGED: 01-session (full desktop: wallpaper + panel + menu button branding; host captures via virsh)
+
+### APPLETS
+KEY: ENABLED_APPLETS:
+    ['panel1:left:0:menu@cinnamon.org:0', 'panel1:left:1:separator@cinnamon.org:1', 'panel1:left:2:grouped-window-list@cinnamon.org:2', 'panel1:right:0:systray@cinnamon.org:3', 'panel1:right:1:xapp-status@cinnamon.org:4', 'panel1:right:2:notifications@cinnamon.org:5', 'panel1:right:3:printers@cinnamon.org:6', 'panel1:right:4:removable-drives@cinnamon.org:7', 'panel1:right:5:keyboard@cinnamon.org:8', 'panel1:right:6:favorites@cinnamon.org:9', 'panel1:right:7:network@cinnamon.org:10', 'panel1:right:8:sound@cinnamon.org:11', 'panel1:right:9:power@cinnamon.org:12', 'panel1:right:10:calendar@cinnamon.org:13', 'panel1:right:11:cornerbar@cinnamon.org:14']
+KEY: PANELS_ENABLED: ['1:0:bottom']
+KEY: AVAILABLE_APPLET_DIRS: 34
+KEY: AVAILABLE_APPLETS:
+    a11y@cinnamon.org
+    calendar@cinnamon.org
+    cornerbar@cinnamon.org
+    expo@cinnamon.org
+    favorites@cinnamon.org
+    grouped-window-list@cinnamon.org
+    inhibit@cinnamon.org
+    keyboard@cinnamon.org
+    menu@cinnamon.org
+    network@cinnamon.org
+    nightlight@cinnamon.org
+    notifications@cinnamon.org
+    on-screen-keyboard@cinnamon.org
+    panel-launchers@cinnamon.org
+    power@cinnamon.org
+    printers@cinnamon.org
+    recent@cinnamon.org
+    removable-drives@cinnamon.org
+    scale@cinnamon.org
+    separator@cinnamon.org
+    settings@cinnamon.org
+    settings-example@cinnamon.org
+    show-desktop@cinnamon.org
+    slideshow@cinnamon.org
+    sound@cinnamon.org
+    spacer@cinnamon.org
+    systray@cinnamon.org
+    trash@cinnamon.org
+    user@cinnamon.org
+    window-list@cinnamon.org
+    windows-quick-list@cinnamon.org
+    workspace-switcher@cinnamon.org
+    xapp-status@cinnamon.org
+    xrandr@cinnamon.org
+KEY: SCREENSHOT_STAGED: 02-panel (bottom panel with applet icons; host captures via virsh)
+
+### BRANDING
+KEY: APP_MENU_ICON_NAME: 'fedora-logo-icon'
+KEY: SYSTEM_ICON: 'fedora-logo-icon'
+KEY: ICON_FILES: /usr/share/icons/hicolor/16x16/apps/fedora-logo-icon.png
+/usr/share/icons/hicolor/22x22/apps/fedora-logo-icon.png
+/usr/share/icons/hicolor/24x24/apps/fedora-logo-icon.png
+KEY: ICON_OWNER: rocky-logos-100.5-3.el10.x86_64
+KEY: SCREENSHOT_STAGED: 03-menu-button (bottom-left of panel; included in 01-session)
+
+### WALLPAPER
+KEY: PICTURE_URI: 'file:///usr/share/backgrounds/rocky-default-10-gemstone-skies-time.xml'
+KEY: PICTURE_OPTIONS: 'zoom'
+KEY: PRIMARY_COLOR: '#000000'
+KEY: ROCKY_BACKGROUND_FILES:
+    rocky-default-10-abstract-1-day.png
+    rocky-default-10-abstract-1-night.png
+    rocky-default-10-abstract-1-time.xml
+    rocky-default-10-abstract-2.png
+    rocky-default-10-abstract-2.xml
+    rocky-default-10-abstract-3.png
+    rocky-default-10-abstract-3.xml
+    rocky-default-10-abstract-4.png
+    rocky-default-10-abstract-4.xml
+    rocky-default-10-abstract-5.png
+    rocky-default-10-abstract-5.xml
+    rocky-default-10-arizona-sunrise.jpg
+    rocky-default-10-arizona-sunset.jpg
+    rocky-default-10-arizona-time.xml
+    rocky-default-10-gemstone-skies-day.png
+    rocky-default-10-gemstone-skies-night.png
+    rocky-default-10-gemstone-skies-time.xml
+    rocky-default-10-quartz-forest-day.jpg
+    rocky-default-10-quartz-forest-night.jpg
+    rocky-default-10-quartz-forest-time.xml
+    rocky-default-10-sapphire-light.png
+    rocky-default-10-sapphire-light.xml
+    rocky-default-10-sapphire.png
+    rocky-default-10-sapphire.xml
+KEY: WALLPAPER_OWNER: rocky-backgrounds-100.5-3.el10.noarch
+KEY: SCREENSHOT_STAGED: 04-wallpaper (desktop region of 01-session; host analyzes non-black fraction)
+
+### THEMES
+KEY: CINNEMON_THEME_NAME: ''
+KEY: GTK_THEME: 'Adwaita'
+KEY: ICON_THEME: 'gnome'
+KEY: SHELL_THEME_ASSETS: 19 files under /usr/share/cinnamon/theme/
+KEY: USER_THEMES: 
+KEY: SCREENSHOT_STAGED: 05-themes-panel (Cinnamon Settings > Themes; host captures via virsh)
+
+### EXTENSION_MANAGER
+KEY: EXTENSIONS_DIR: absent (no shipped extensions on this system)
+KEY: SHIPPED_EXTENSIONS:
+
+KEY: DESKLET_DIRS: 3
+KEY: MANAGER_PANEL_DESKTOPS:
+    /usr/share/applications/cinnamon-settings-applets.desktop
+    /usr/share/applications/cinnamon-settings-desklets.desktop
+    /usr/share/applications/cinnamon-settings-extensions.desktop
+KEY: MANAGER_MODULE: /usr/share/cinnamon/cinnamon-settings/modules/cs_extensions.py
+KEY: SCREENSHOT_STAGED: 06-extension-manager (cinnamon-settings extensions open; host captures via virsh)
+
+### SCREENSAVER
+KEY: CINNAMON_SCREENSAVER_PKG: package cinnamon-screensaver is not installed
+not installed (folded into cinnamon shell at 6.7)
+KEY: SCREENSAVER_COMMAND: /usr/bin/cinnamon-screensaver-command
+KEY: SCREENSAVER_VERSION: cinnamon-screensaver-command (Cinnamon version unknown)
+KEY: SCREENSAVER_SERVICE: inactive
+no service (6.7 renders the shield in-shell via js/ui/screensaver)
+KEY: SHELL_SCREENSAVER_CODE: /usr/share/cinnamon/js/ui/screensaver
+KEY: SCREENSAVER_MODE: schema absent
+KEY: SCREENSAVER_LOCK_ENABLED: true
+
+### MENU
+KEY: MENU_APPLET_DIR: /usr/share/cinnamon/applets/menu@cinnamon.org
+KEY: MENU_APPLET_ENABLED: 1
+KEY: CINNAMON_SETTINGS_MENU_ENTRY: /usr/share/applications/cinnamon-settings-default.desktop
+KEY: SETTINGS_PANEL_COUNT: 32
+KEY: SETTINGS_PANELS:
+    cinnamon-settings-accessibility.desktop
+    cinnamon-settings-actions.desktop
+    cinnamon-settings-applets.desktop
+    cinnamon-settings-backgrounds.desktop
+    cinnamon-settings-calendar.desktop
+    cinnamon-settings-default.desktop
+    cinnamon-settings-desklets.desktop
+    cinnamon-settings-desktop.desktop
+    cinnamon-settings-display.desktop
+    cinnamon-settings-effects.desktop
+    cinnamon-settings-extensions.desktop
+    cinnamon-settings-fonts.desktop
+    cinnamon-settings-general.desktop
+    cinnamon-settings-gestures.desktop
+    cinnamon-settings-hotcorner.desktop
+    cinnamon-settings-info.desktop
+    cinnamon-settings-keyboard.desktop
+    cinnamon-settings-mouse.desktop
+    cinnamon-settings-nightlight.desktop
+    cinnamon-settings-notifications.desktop
+    cinnamon-settings-panel.desktop
+    cinnamon-settings-power.desktop
+    cinnamon-settings-privacy.desktop
+    cinnamon-settings-screensaver.desktop
+    cinnamon-settings-sound.desktop
+    cinnamon-settings-startup.desktop
+    cinnamon-settings-themes.desktop
+    cinnamon-settings-thunderbolt.desktop
+    cinnamon-settings-user.desktop
+    cinnamon-settings-users.desktop
+    cinnamon-settings-windows.desktop
+    cinnamon-settings-workspaces.desktop
+KEY: SCREENSHOT_STAGED: 07-main-menu (main menu open with Cinnamon Settings submenu; host captures via virsh)
+
+### NEMO
+KEY: NEMO_PKG: nemo-6.7.4-2.el10.x86_64
+KEY: NEMO_DESKTOP: 1
+KEY: NEMO_BINARY: /usr/bin/nemo
+KEY: SCREENSHOT_STAGED: 08-nemo (nemo file manager open; host captures via virsh)
+
+### TERMINAL
+KEY: GNOME_TERMINAL: absent
+KEY: ALTERNATIVES: 
+KEY: SCREENSHOT_STAGED: 09-terminal (terminal open; host captures via virsh, or records absence)
+
+### SESSION_POWER
+KEY: POWER_APPLET_ENABLED: 1
+KEY: POWER_SETTINGS_PANEL: /usr/share/applications/cinnamon-settings-power.desktop
+KEY: SESSION_SETTINGS_PANEL: absent (6.7 session controls)
+KEY: SESSION_SCHEMA_IDLE: uint32 900
+KEY: WAYLAND_SESSIONS:     cinnamon-wayland.desktop
+    gnome.desktop
+    gnome-wayland.desktop
+KEY: X_SESSIONS:     cinnamon.desktop
+KEY: SCREENSHOT_STAGED: 10-power-menu (panel power applet menu open; host captures via virsh)
+KEY: SCREENSHOT_STAGED: 11-session-controls (Cinnamon Settings session/power panel; host captures via virsh)
+
+### DCONF_BACKGROUND
+KEY: org.cinnamon.desktop.background picture-uri: 'file:///usr/share/backgrounds/rocky-default-10-gemstone-skies-time.xml'
+KEY: org.cinnamon.desktop.background picture-options: 'zoom'
+KEY: org.cinnamon.desktop.background primary-color: '#000000'
+KEY: org.cinnamon.desktop.background secondary-color: '#000000'
+KEY: org.cinnamon.desktop.background color-shading-type: 'solid'
+
+### END (label=rocky10-2.2, 2026-09-17T02:59:18Z)

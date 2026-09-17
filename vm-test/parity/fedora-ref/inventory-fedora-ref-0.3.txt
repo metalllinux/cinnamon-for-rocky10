@@ -1,0 +1,209 @@
+
+### OS-VM
+KEY: PRETTY_NAME: Fedora Linux 44 (Forty Four)
+KEY: HOSTNAME: fedora
+KEY: KERNEL: 7.1.10-200.fc44.x86_64
+KEY: INVENTORY_USER: howard (uid 1000)
+KEY: UPTIME: up 21 hours, 19 minutes
+
+### STACK
+KEY: CINNEMON_STACK:
+    cinnamon-6.6.7-7.fc44.x86_64
+    cinnamon-calendar-server-6.6.7-7.fc44.x86_64
+    cinnamon-control-center-6.6.0-3.fc44.x86_64
+    cinnamon-control-center-filesystem-6.6.0-3.fc44.x86_64
+    cinnamon-desktop-6.6.2-7.fc44.x86_64
+    cinnamon-menus-6.6.0-3.fc44.x86_64
+    cinnamon-screensaver-6.6.1-4.fc44.x86_64
+    cinnamon-session-6.6.4-1.fc44.x86_64
+    cinnamon-settings-daemon-6.6.3-1.fc44.x86_64
+    cinnamon-themes-2.3.8-1.fc44.noarch
+    cinnamon-translations-6.6.2-3.fc44.noarch
+    cjs-128.1-5.fc44.x86_64
+    cjson-1.7.19-1.fc44.x86_64
+    gdk-pixbuf2-2.44.4-2.fc44.x86_64
+    gtk-layer-shell-0.10.0-1.fc44.x86_64
+    mozjs128-128.14.0-1.fc44.x86_64
+    mozjs140-140.13.0-3.fc44.x86_64
+    muffin-6.6.3-1.fc44.x86_64
+    nemo-6.6.3-3.fc44.x86_64
+    nemo-extensions-6.6.3-3.fc44.x86_64
+    nemo-fileroller-6.6.0-3.fc44.x86_64
+    nemo-image-converter-6.6.0-3.fc44.x86_64
+    nemo-preview-6.6.0-3.fc44.x86_64
+    nemo-python-6.6.0-3.fc44.x86_64
+    nemo-search-helpers-6.6.3-3.fc44.x86_64
+    xapps-3.2.2-3.fc44.x86_64
+KEY: CINNAMON_VERSION: Cinnamon 6.6.7
+KEY: NEMO_VERSION: nemo 6.6.3
+
+### SESSION
+KEY: SESSION_ID: 1
+KEY: SESSION_TYPE: wayland
+KEY: GDMSESSION: n/a (no session env in this shell)
+KEY: SESSION_PROCESSES:
+    howard   cinnamon
+    howard   cinnamon-sessio
+    howard   gdm-wayland-ses
+    howard   nemo-desktop
+KEY: SCREENSHOT_STAGED: 01-session (full desktop: wallpaper + panel + menu button branding; host captures via virsh)
+
+### APPLETS
+KEY: ENABLED_APPLETS:
+    ['panel1:left:0:menu@cinnamon.org:0', 'panel1:left:1:show-desktop@cinnamon.org:1', 'panel1:left:2:grouped-window-list@cinnamon.org:2', 'panel1:right:0:keyboard@cinnamon.org:3', 'panel1:right:1:systray@cinnamon.org:4', 'panel1:right:2:xapp-status@cinnamon.org:5', 'panel1:right:3:notifications@cinnamon.org:6', 'panel1:right:4:printers@cinnamon.org:7', 'panel1:right:5:removable-drives@cinnamon.org:8', 'panel1:right:6:network@cinnamon.org:9', 'panel1:right:7:nightlight@cinnamon.org:10', 'panel1:right:8:power@cinnamon.org:11', 'panel1:right:9:calendar@cinnamon.org:12', 'panel1:right:10:sound@cinnamon.org:13']
+KEY: PANELS_ENABLED: ['1:0:bottom']
+KEY: AVAILABLE_APPLET_DIRS: 34
+KEY: AVAILABLE_APPLETS:
+    a11y@cinnamon.org
+    calendar@cinnamon.org
+    cornerbar@cinnamon.org
+    expo@cinnamon.org
+    favorites@cinnamon.org
+    grouped-window-list@cinnamon.org
+    inhibit@cinnamon.org
+    keyboard@cinnamon.org
+    menu@cinnamon.org
+    network@cinnamon.org
+    nightlight@cinnamon.org
+    notifications@cinnamon.org
+    on-screen-keyboard@cinnamon.org
+    panel-launchers@cinnamon.org
+    power@cinnamon.org
+    printers@cinnamon.org
+    recent@cinnamon.org
+    removable-drives@cinnamon.org
+    scale@cinnamon.org
+    separator@cinnamon.org
+    settings@cinnamon.org
+    settings-example@cinnamon.org
+    show-desktop@cinnamon.org
+    slideshow@cinnamon.org
+    sound@cinnamon.org
+    spacer@cinnamon.org
+    systray@cinnamon.org
+    trash@cinnamon.org
+    user@cinnamon.org
+    window-list@cinnamon.org
+    windows-quick-list@cinnamon.org
+    workspace-switcher@cinnamon.org
+    xapp-status@cinnamon.org
+    xrandr@cinnamon.org
+KEY: SCREENSHOT_STAGED: 02-panel (bottom panel with applet icons; host captures via virsh)
+
+### BRANDING
+KEY: APP_MENU_ICON_NAME: 'fedora-logo-sprite'
+KEY: SYSTEM_ICON: 'fedora-logo-sprite'
+KEY: ICON_FILES: /usr/share/pixmaps/fedora-logo-sprite.png
+/usr/share/pixmaps/fedora-logo-sprite.svg
+KEY: ICON_OWNER: fedora-logos-42.0.1-3.fc44.noarch
+KEY: SCREENSHOT_STAGED: 03-menu-button (bottom-left of panel; included in 01-session)
+
+### WALLPAPER
+KEY: PICTURE_URI: 'file:///usr/share/backgrounds/tiles/default_blue.jpg'
+KEY: PICTURE_OPTIONS: 'zoom'
+KEY: PRIMARY_COLOR: '#023c88'
+KEY: ROCKY_BACKGROUND_FILES:
+
+KEY: WALLPAPER_OWNER: desktop-backgrounds-basic-44.0.0-2.fc44.noarch
+KEY: SCREENSHOT_STAGED: 04-wallpaper (desktop region of 01-session; host analyzes non-black fraction)
+
+### THEMES
+KEY: CINNEMON_THEME_NAME: 'Mint-Y-Dark-Aqua'
+KEY: GTK_THEME: 'Mint-Y-Dark-Aqua'
+KEY: ICON_THEME: 'Mint-Y-Aqua'
+KEY: SHELL_THEME_ASSETS: 19 files under /usr/share/cinnamon/theme/
+KEY: USER_THEMES: 
+KEY: SCREENSHOT_STAGED: 05-themes-panel (Cinnamon Settings > Themes; host captures via virsh)
+
+### EXTENSION_MANAGER
+KEY: EXTENSIONS_DIR: absent (no shipped extensions on this system)
+KEY: SHIPPED_EXTENSIONS:
+
+KEY: DESKLET_DIRS: 3
+KEY: MANAGER_PANEL_DESKTOPS:
+    /usr/share/applications/cinnamon-settings-applets.desktop
+    /usr/share/applications/cinnamon-settings-desklets.desktop
+    /usr/share/applications/cinnamon-settings-extensions.desktop
+KEY: MANAGER_MODULE: /usr/share/cinnamon/cinnamon-settings/modules/cs_extensions.py
+KEY: SCREENSHOT_STAGED: 06-extension-manager (cinnamon-settings extensions open; host captures via virsh)
+
+### SCREENSAVER
+KEY: CINNAMON_SCREENSAVER_PKG: cinnamon-screensaver-6.6.1-4.fc44.x86_64
+KEY: SCREENSAVER_COMMAND: /usr/bin/cinnamon-screensaver-command
+KEY: SCREENSAVER_VERSION: cinnamon-screensaver 6.6.1
+KEY: SCREENSAVER_SERVICE: inactive
+no service (6.7 renders the shield in-shell via js/ui/screensaver)
+KEY: SHELL_SCREENSAVER_CODE: absent
+KEY: SCREENSAVER_MODE: schema absent
+KEY: SCREENSAVER_LOCK_ENABLED: true
+
+### MENU
+KEY: MENU_APPLET_DIR: /usr/share/cinnamon/applets/menu@cinnamon.org
+KEY: MENU_APPLET_ENABLED: 1
+KEY: CINNAMON_SETTINGS_MENU_ENTRY: /usr/share/applications/cinnamon-settings-default.desktop
+KEY: SETTINGS_PANEL_COUNT: 31
+KEY: SETTINGS_PANELS:
+    cinnamon-settings-actions.desktop
+    cinnamon-settings-applets.desktop
+    cinnamon-settings-backgrounds.desktop
+    cinnamon-settings-calendar.desktop
+    cinnamon-settings-default.desktop
+    cinnamon-settings-desklets.desktop
+    cinnamon-settings-desktop.desktop
+    cinnamon-settings-effects.desktop
+    cinnamon-settings-extensions.desktop
+    cinnamon-settings-fonts.desktop
+    cinnamon-settings-general.desktop
+    cinnamon-settings-gestures.desktop
+    cinnamon-settings-hotcorner.desktop
+    cinnamon-settings-info.desktop
+    cinnamon-settings-keyboard.desktop
+    cinnamon-settings-mouse.desktop
+    cinnamon-settings-nightlight.desktop
+    cinnamon-settings-notifications.desktop
+    cinnamon-settings-panel.desktop
+    cinnamon-settings-power.desktop
+    cinnamon-settings-privacy.desktop
+    cinnamon-settings-screensaver.desktop
+    cinnamon-settings-sound.desktop
+    cinnamon-settings-startup.desktop
+    cinnamon-settings-themes.desktop
+    cinnamon-settings-thunderbolt.desktop
+    cinnamon-settings-universal-access.desktop
+    cinnamon-settings-user.desktop
+    cinnamon-settings-users.desktop
+    cinnamon-settings-windows.desktop
+    cinnamon-settings-workspaces.desktop
+KEY: SCREENSHOT_STAGED: 07-main-menu (main menu open with Cinnamon Settings submenu; host captures via virsh)
+
+### NEMO
+KEY: NEMO_PKG: nemo-6.6.3-3.fc44.x86_64
+KEY: NEMO_DESKTOP: 1
+KEY: NEMO_BINARY: /usr/bin/nemo
+KEY: SCREENSHOT_STAGED: 08-nemo (nemo file manager open; host captures via virsh)
+
+### TERMINAL
+KEY: GNOME_TERMINAL: /usr/bin/gnome-terminal
+KEY: GNOME_TERMINAL_VERSION: # GNOME Terminal 3.60.0 using VTE 0.84.1 +BIDI +GNUTLS +ICU +SYSTEMD
+KEY: TERM_OWNER: gnome-terminal-3.60.0-1.fc44.x86_64
+KEY: ALTERNATIVES: 
+KEY: SCREENSHOT_STAGED: 09-terminal (terminal open; host captures via virsh, or records absence)
+
+### SESSION_POWER
+KEY: POWER_APPLET_ENABLED: 1
+KEY: POWER_SETTINGS_PANEL: /usr/share/applications/cinnamon-settings-power.desktop
+KEY: SESSION_SETTINGS_PANEL: absent (6.7 session controls)
+KEY: SESSION_SCHEMA_IDLE: uint32 900
+KEY: WAYLAND_SESSIONS:     cinnamon-wayland.desktop
+KEY: X_SESSIONS: 
+KEY: SCREENSHOT_STAGED: 10-power-menu (panel power applet menu open; host captures via virsh)
+KEY: SCREENSHOT_STAGED: 11-session-controls (Cinnamon Settings session/power panel; host captures via virsh)
+
+### DCONF_BACKGROUND
+KEY: org.cinnamon.desktop.background picture-uri: 'file:///usr/share/backgrounds/tiles/default_blue.jpg'
+KEY: org.cinnamon.desktop.background picture-options: 'zoom'
+KEY: org.cinnamon.desktop.background primary-color: '#023c88'
+KEY: org.cinnamon.desktop.background secondary-color: '#5789ca'
+KEY: org.cinnamon.desktop.background color-shading-type: 'solid'
+
+### END (label=fedora-ref-0.3, 2026-09-17T03:16:21Z)
