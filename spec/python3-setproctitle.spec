@@ -6,7 +6,7 @@ Summary:        Replace the process title of a Python process
 %global debug_package %{nil}
 # No debuginfo subpackage: pip-installed module (no native debug sections worth shipping)
 License:        BSD-3-Clause
-URL:            https://github.com/dvarrazz/python-setproctitle
+URL:            https://github.com/dvarrazzo/py-setproctitle
 Source0:        setproctitle-1.3.7.tar.gz
 # sha256 (PyPI sdist, verified 2026-09-17 with sha256sum):
 # bc2bc917691c1537d5b9bca1468437176809c7e11e5694ca79a9ca12345dcb9e
@@ -41,6 +41,7 @@ EPEL repo carries it (TASK-0017).
 python3 -m pip install --no-cache-dir --no-deps --target %{buildroot}%{python3_sitelib} .
 
 %files
+%license LICENSE
 %{python3_sitelib}/setproctitle*
 
 %changelog

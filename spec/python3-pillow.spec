@@ -48,6 +48,7 @@ EL10 or EPEL repo carries it (TASK-0017).
 python3 -m pip install --no-cache-dir --no-deps --target %{buildroot}%{python3_sitelib} .
 
 %files
+%license LICENSE
 # Import package is PIL; the dist-info directory uses the PEP 503
 # normalized project name (pillow).
 %dir %{python3_sitelib}/PIL/

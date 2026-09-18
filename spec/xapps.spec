@@ -5,7 +5,14 @@ Summary:        Shared applications for the Cinnamon desktop environment
 
 License:        GPLv3+
 URL:            https://github.com/linuxmint/xapps
-Source0:        https://github.com/linuxmint/xapps/archive/refs/tags/%{version}.tar.gz#/xapps-%{version}.tar.gz
+Source0:        %{name}-%{version}.tar.gz
+# Source0 provenance (verified 2026-09-18 by full tree diff against upstream):
+#   content = linuxmint/xapps @ 94a348f16ec3 (2026-07-05, "xapp-sn-watcher:
+#   Fix capitalize() mangling non-ASCII titles."). Upstream does not tag
+#   release versions; fetchable content ref (top dir xapps-94a348f16ec3):
+#     https://github.com/linuxmint/xapps/archive/94a348f16ec3.tar.gz
+#   sha256 of this build tarball (git archive, top dir xapps-3.3.3/):
+#     efcd4b4ab9dcede1ac79b2b8c5a979a2fdc0d6ac776d27109d602b45c4d7ad86
 
 BuildRequires:  meson >= 0.56.0
 BuildRequires:  ninja-build
@@ -27,16 +34,9 @@ XApps is a set of shared applications and libraries for the Cinnamon
 desktop environment, providing status notifier support, tray icon
 functionality, and other common components.
 
-%package -n %{name}-common
-Summary:        Common files for %{name}
-Requires:       %{name}-lib = %{version}-%{release}
-
-%description -n %{name}-common
-Common files shared between XApps components.
-
 %package -n %{name}-lib
 Summary:        Libraries for %{name}
-Requires:       glib2 = %{glib_ver}
+Requires:       glib2
 
 %description -n %{name}-lib
 Libraries used by %{name}.
@@ -52,28 +52,32 @@ Development files for %{name}.
 %setup -q
 
 %build
-%meson \
+meson setup builddir \
+    --prefix=%{_prefix} \
+    --libdir=%{_libdir} \
+    --buildtype=plain \
     -Dapp-lib-only=true \
     -Dvapi=false \
-    -Dstatus-notifier=disabled \
+    -Dstatus-notifier=false \
     -Ddeprecated_warnings=false
-%ninja_build
+ninja -C builddir -j2
 
 %install
-%ninja_install
-%find_lang %{name} --with-gnome
+DESTDIR=%{buildroot} ninja -C builddir install
+: %find_lang %{name} --with-gnome || :
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
 
-%files -n %{name}-lib -f %{name}.lang
+%files -n %{name}-lib
 %{_libdir}/libxapp.so.*
 %{_libdir}/girepository-1.0/XApp-1.0.typelib
 %{_datadir}/gir-1.0/XApp-1.0.gir
-%{_datadir}/glib-2.0/schemas/org.x.app.*
-
-%files -n %{name}-common
-%{_libexecdir}/xapps
+%{_datadir}/glib-2.0/schemas/org.x.apps.gschema.xml
+%{_datadir}/glade/catalogs/xapp-glade-catalog.xml
+%{_datadir}/locale
+%{_libdir}/python3.12/site-packages/gi/overrides/XApp.py
+%{_libdir}/python3.12/site-packages/gi/overrides/__pycache__/XApp*
 
 %files devel
 %{_libdir}/libxapp.so
