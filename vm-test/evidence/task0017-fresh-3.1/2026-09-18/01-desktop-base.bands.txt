@@ -1,0 +1,44 @@
+image 1280x800; band mean RGB (every 20 rows, sampled every 2nd px):
+  rows    0-  19: mean=( 55, 11, 49)  buckets=40
+  rows   20-  39: mean=( 55, 11, 49)  buckets=35
+  rows   40-  59: mean=( 56, 11, 49)  buckets=33
+  rows   60-  79: mean=( 55, 11, 49)  buckets=31
+  rows   80-  99: mean=( 54, 10, 48)  buckets=25
+  rows  100- 119: mean=( 53, 10, 47)  buckets=21
+  rows  120- 139: mean=( 52, 10, 47)  buckets=19
+  rows  140- 159: mean=( 52, 10, 47)  buckets=19
+  rows  160- 179: mean=( 51, 10, 46)  buckets=18
+  rows  180- 199: mean=( 51, 10, 46)  buckets=17
+  rows  200- 219: mean=( 50, 10, 45)  buckets=18
+  rows  220- 239: mean=( 50,  9, 45)  buckets=18
+  rows  240- 259: mean=( 50,  9, 45)  buckets=18
+  rows  260- 279: mean=( 50,  9, 44)  buckets=14
+  rows  280- 299: mean=( 49,  9, 43)  buckets=14
+  rows  300- 319: mean=( 48,  9, 43)  buckets=13
+  rows  320- 339: mean=( 48,  8, 42)  buckets=14
+  rows  340- 359: mean=( 46,  9, 40)  buckets=12
+  rows  360- 379: mean=( 46,  8, 39)  buckets=9
+  rows  380- 399: mean=( 46,  8, 39)  buckets=8
+  rows  400- 419: mean=( 46,  8, 38)  buckets=9
+  rows  420- 439: mean=( 46,  8, 37)  buckets=9
+  rows  440- 459: mean=( 46,  8, 36)  buckets=10
+  rows  460- 479: mean=( 46,  7, 34)  buckets=10
+  rows  480- 499: mean=( 46,  8, 33)  buckets=13
+  rows  500- 519: mean=( 46,  7, 32)  buckets=13
+  rows  520- 539: mean=( 47,  7, 31)  buckets=14
+  rows  540- 559: mean=( 48,  7, 30)  buckets=17
+  rows  560- 579: mean=( 48,  7, 29)  buckets=18
+  rows  580- 599: mean=( 49,  6, 28)  buckets=18
+  rows  600- 619: mean=( 50,  6, 28)  buckets=22
+  rows  620- 639: mean=( 50,  6, 27)  buckets=31
+  rows  640- 659: mean=( 50,  6, 26)  buckets=29
+  rows  660- 679: mean=( 50,  6, 26)  buckets=34
+  rows  680- 699: mean=( 51,  6, 26)  buckets=39
+  rows  700- 719: mean=( 51,  6, 26)  buckets=37
+  rows  720- 739: mean=( 51,  6, 26)  buckets=34
+  rows  740- 759: mean=( 51,  6, 25)  buckets=34
+  rows  760- 779: mean=( 31, 34, 38)  buckets=70
+  rows  780- 799: mean=( 30, 31, 36)  buckets=55
+top-bar(0-28): mean=( 55, 11, 49) buckets=40
+bottom-bar(h-28-h): mean=( 30, 32, 37) buckets=88
+center: mean=( 46,  8, 38) buckets=8

@@ -1,0 +1,26 @@
+=== Cinnamon panel config files (gdmtest) ===
+ls: cannot access '/home/gdmtest/.config/cinnamon/desktop/panels/': No such file or directory
+ls: cannot access '/home/gdmtest/.local/share/cinnamon/panels/': No such file or directory
+(no panel dir found at usual paths)
+--- panel JSON contents (position + height + applets) ---
+=== panel applets present on the running session ===
+              [menu item] '' @(0,0 196x39)
+              [menu item] '' @(0,0 196x39)
+              [menu item] '' @(0,0 196x18)
+              [menu item] '' @(0,0 196x42)
+              [menu item] '' @(0,0 196x18)
+              [menu item] '' @(0,0 196x39)
+              [menu item] '' @(0,0 196x39)
+              [menu item] '' @(0,0 196x39)
+              [menu item] '' @(0,0 196x18)
+              [menu item] '' @(0,0 196x18)
+              [menu item] '' @(0,0 196x39)
+                  [menu item] '' @(0,0 184x39)
+                  [menu item] '' @(0,0 184x39)
+                  [menu item] '' @(0,0 184x39)
+              [menu item] '' @(0,0 196x39)
+        [label] 'Menu' @(0,0 70x49)
+              [menu item] '' @(0,0 140x39)
+                [label] 'Edit menu' @(0,0 77x24)
+              [menu item] '' @(0,0 140x18)
+              [menu item] '' @(0,0 140x39)

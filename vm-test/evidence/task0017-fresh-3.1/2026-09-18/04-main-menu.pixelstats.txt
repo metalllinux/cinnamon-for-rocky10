@@ -1,0 +1,23 @@
+file: /home/howard/Linux/projects/cinnamon-for-rocky10/vm-test/evidence/task0017-fresh-3.1/2026-09-18/04-main-menu.png
+size: 1280x800  total_pixels: 1024000
+unique_colours_raw: 3201
+unique_buckets_4bit: 354
+top_bucketed_colours:
+  #000000  86.62%
+  #100000  11.16%
+  #303030   0.85%
+  #200000   0.27%
+  #200010   0.26%
+  #f0f0f0   0.24%
+  #202020   0.19%
+  #100010   0.08%
+  #808080   0.05%
+  #101010   0.01%
+  #403030   0.01%
+  #000010   0.01%
+  #202030   0.01%
+  #506060   0.01%
+  #f0d080   0.01%
+max_single_bucket: 0.8662
+mean_rgb: (11,1,8)
+blankness: VARIED (multiple colours, not a solid fill)

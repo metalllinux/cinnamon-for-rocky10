@@ -1,0 +1,23 @@
+file: /home/howard/Linux/projects/cinnamon-for-rocky10/vm-test/evidence/task0017-fresh-3.1/2026-09-18/02-terminal.png
+size: 1280x800  total_pixels: 1024000
+unique_colours_raw: 2785
+unique_buckets_4bit: 232
+top_bucketed_colours:
+  #000000  68.96%
+  #100000  27.88%
+  #200010   1.07%
+  #100010   0.92%
+  #000010   0.50%
+  #200000   0.26%
+  #f0f0f0   0.19%
+  #300010   0.08%
+  #201010   0.02%
+  #f0d080   0.01%
+  #80d0f0   0.01%
+  #000040   0.01%
+  #301010   0.01%
+  #504050   0.00%
+  #e0f0f0   0.00%
+max_single_bucket: 0.6896
+mean_rgb: (14,2,10)
+blankness: VARIED (multiple colours, not a solid fill)
