@@ -1,0 +1,5 @@
+<stdin>:7: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+image=1280x800
+menu_region (0,330)-(300,700):      avg=(49,49,55) unique_colors=2852 n=111000
+wallpaper_region (700,100)-(1200,600): avg=(60,17,54) unique_colors=8782 n=250000
+panel_strip (0,0)-(1280,30):        avg=(71,23,65) unique_colors=2728 n=38400
