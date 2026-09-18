@@ -1,0 +1,21 @@
+=== session state before ===
+Type=wayland
+State=active
+=== toolkit-accessibility (session bus) ===
+toolkit-accessibility=true
+=== open main menu via ukey key Super_L ===
+=== a11y tree (cinnamon app) ===
+15:              [menu item] '' @(0,0 196x39)
+19:              [menu item] '' @(0,0 196x39)
+23:              [menu item] '' @(0,0 196x18)
+25:              [menu item] '' @(0,0 196x42)
+32:              [menu item] '' @(0,0 196x18)
+34:              [menu item] '' @(0,0 196x39)
+38:              [menu item] '' @(0,0 196x39)
+42:              [menu item] '' @(0,0 196x39)
+46:              [menu item] '' @(0,0 196x18)
+48:              [menu item] '' @(0,0 196x18)
+=== screenshot (menu open) ===
+-rw-r--r--. 1 gdmtest gdmtest 647037 Sep 18 16:14 /root/evidence/revB-menu.png
+=== close menu (Escape) ===
+=== done ===

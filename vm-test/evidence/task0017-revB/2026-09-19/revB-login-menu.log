@@ -1,0 +1,22 @@
+=== build driver ===
+Last metadata expiration check: 0:15:49 ago on Fri 18 Sep 2026 03:47:20 PM UTC.
+Package gcc-14.3.1-4.4.el10.x86_64 is already installed.
+Package kernel-headers-6.12.0-211.55.1.el10_2.x86_64 is already installed.
+Package python3-dbus-1.3.2-8.el10.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+gdm-drive: ukey built at /root/gdm-harness/ukey
+=== wait for greeter ===
+gdm-drive: greeter session up after 0s; settling 10s
+=== login ===
+gdm-drive: greeter session up after 0s; settling 10s
+gdm-drive: clicked visible node 'Not listed?' at 513,412
+gdm-drive: caps probe: entry @(489,465 302x20), typing at 640,475
+gdm-drive: caps probe: typed 'abc', readback 'abc'
+gdm-drive: caps probe: compositor caps verified LOWERCASE by readback (0 toggle(s))
+gdm-drive: caps probe: kernel caps LED now 0 (parity record only)
+gdm-drive: clicked visible node 'Login Options' at 1160,744
+gdm-drive: clicked visible node 'Cinnamon (Wayland)' at 1162,638
+gdm-drive: pre-password kernel caps LED 0 (compositor caps verified lowercase by probe readback)
+gdm-drive: no verified session for gdmtest after 150s; last: none
