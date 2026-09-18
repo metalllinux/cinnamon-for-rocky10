@@ -21,14 +21,6 @@ INSTALL_LOG="${RESULTS_DIR}/install.log"
 REMOTE_RPMS_DIR="/tmp/cinnamon-rpms"
 RPMS_DIR="${PROJECT_DIR}/rpms"
 
-# System dependencies required by Cinnamon RPMs but not provided by our build.
-# Note: mozjs115 is now a custom RPM (not in EL10 repos).
-# Note: clutter and cogl are bundled in muffin (not separate system packages).
-#   - cinnamon-settings-daemon: needs GSettings schemas (gsettings-desktop-schemas)
-SYSTEM_DEPS=(
-    "gsettings-desktop-schemas"
-)
-
 log() { printf '[install] %s\n' "$*"; }
 
 die() { printf '[install] ERROR: %s\n' "$*" >&2; exit 1; }
@@ -64,11 +56,14 @@ main() {
     # --- Phase 1: Copy RPMs to VM ---
 
     log "Copying RPMs to VM (${REMOTE_RPMS_DIR})..."
+    [ -f "${SCRIPT_DIR}/install-set.txt" ] || \
+        die "Install set file missing: ${SCRIPT_DIR}/install-set.txt"
     ssh_cmd "$vm_ip" "mkdir -p ${REMOTE_RPMS_DIR}"
     ssh_pin_opts "$vm_ip"
     # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
     scp ${SSH_PIN_OPTS} -i "${SSH_KEY}" \
-        "${RPMS_DIR}"/*.rpm "${VM_USER}@${vm_ip}:${REMOTE_RPMS_DIR}/" \
+        "${RPMS_DIR}"/*.rpm "${SCRIPT_DIR}/install-set.txt" \
+        "${VM_USER}@${vm_ip}:${REMOTE_RPMS_DIR}/" \
         2>&1 | tee -a "$INSTALL_LOG"
     log "RPMs copied."
 
@@ -99,20 +94,18 @@ if command -v getenforce >/dev/null 2>&1; then
     echo "SELinux set to permissive for testing."
 fi
 
-# Install system dependencies required by Cinnamon RPMs.
-# These are runtime libraries not provided by our custom RPM build.
-echo ""
-echo "=== Installing system dependencies ==="
-dnf install -y \
-    mozjs115 \
-    clutter \
-    cogl \
-    gsettings-desktop-schemas \
-    rocky-backgrounds \
-    rocky-logos \
-    2>&1 || echo "WARNING: Some system dependencies failed to install"
-
-echo "=== System dependencies installed ==="
+# No native dnf install is needed here (TASK-0017 T2). Every dependency of
+# the local RPM set resolves one of three ways:
+#   - from the local set itself in Phase 3 (mozjs115, muffin-clutter,
+#     muffin-cogl, gtk-layer-shell, the five python3-* RPMs, ...),
+#   - pulled automatically from the native repos by the RPMs' own Requires
+#     (gsettings-desktop-schemas via gnome-terminal; rocky-backgrounds and
+#     rocky-logos via cinnamon-rocky-defaults),
+#   - already present on a base Rocky 10 install.
+# The old block installed native "clutter" and "cogl", which do not exist in
+# the EL10 repos (they ship here as muffin-clutter/muffin-cogl), so the
+# atomic dnf was certain to fail, the failure was swallowed by
+# `|| echo WARNING`, and by dnf atomicity it installed nothing at all.
 echo "=== VM environment ready ==="
 REMOTE_SCRIPT
 
@@ -190,6 +183,11 @@ INSTALL_SCRIPT_EOF
     ssh_cmd "$vm_ip" "bash /tmp/install-rpms.sh ${REMOTE_RPMS_DIR}" 2>&1 | tee -a "$INSTALL_LOG"
     local install_rc=${PIPESTATUS[0]}
     rm -f "$INSTALL_SCRIPT"
+    # T1: a failed install must fail the harness. install_rc was captured
+    # here and never read, so a fully failed install exited 0.
+    if [ "$install_rc" -ne 0 ]; then
+        die "RPM installation failed (rc ${install_rc}). Log: ${INSTALL_LOG}"
+    fi
 
     # --- Phase 4: Verify installation ---
 
@@ -208,20 +206,19 @@ PKG_COUNT=$(echo "$INSTALLED" | wc -l)
 echo ""
 echo "Total matching packages installed: ${PKG_COUNT}"
 
-# Verify each expected package
-EXPECTED=(
-    "mozjs115-devel"
-    "cjs"
-    "cinnamon-desktop"
-    "muffin"
-    "xapps-lib"
-    "cinnamon-session"
-    "cinnamon-settings-daemon"
-    "cinnamon-control-center"
-    "nemo"
-    "cinnamon"
-    "gnome-terminal"
-)
+# Verify each package in the accepted install set (TASK-0017 T3): the 22
+# runtime names from the 3.1 acceptance run, kept in install-set.txt (copied
+# to the VM in Phase 1) so the set is encoded in the repo once instead of
+# being re-derived by hand at every run.
+REMOTE_RPMS_DIR="/tmp/cinnamon-rpms"
+INSTALL_SET="${REMOTE_RPMS_DIR}/install-set.txt"
+[ -f "$INSTALL_SET" ] || { echo "ERROR: ${INSTALL_SET} missing on VM"; exit 1; }
+EXPECTED=()
+while IFS= read -r line; do
+    case "$line" in ''|'#'*) continue ;; esac
+    EXPECTED+=("$line")
+done < "$INSTALL_SET"
+echo "Verifying ${#EXPECTED[@]} packages from install-set.txt"
 
 ALL_OK=true
 for pkg in "${EXPECTED[@]}"; do
@@ -255,11 +252,11 @@ REMOTE_SCRIPT
 
     local verify_rc=${PIPESTATUS[0]}
 
+    # T1: a failed verification must fail the harness (was warning-only).
     if [ "$verify_rc" -ne 0 ]; then
-        log "WARNING: Package verification had issues. Check ${INSTALL_LOG}"
-    else
-        log "All packages installed and verified."
+        die "Package verification failed (rc ${verify_rc}). Log: ${INSTALL_LOG}"
     fi
+    log "All packages installed and verified."
 
     log "Install log written to ${INSTALL_LOG}"
     log "Done."

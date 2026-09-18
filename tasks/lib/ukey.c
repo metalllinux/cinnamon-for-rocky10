@@ -124,8 +124,8 @@ static const struct {
     { "Right",      KEY_RIGHT },
     { "Home",       KEY_HOME },
     { "End",        KEY_END },
-    { "Super_L",    KEY_LEFTCTRL },   /* Windows/Meta key: Cinnamon menu */
-    { "Super_R",    KEY_RIGHTCTRL },
+    { "Super_L",    KEY_LEFTMETA },   /* Windows/Meta key: Cinnamon menu */
+    { "Super_R",    KEY_RIGHTMETA },
     { "F1", KEY_F1 },  { "F2", KEY_F2 },  { "F3", KEY_F3 },
     { "F4", KEY_F4 },  { "F5", KEY_F5 },  { "F6", KEY_F6 },
     { "F7", KEY_F7 },  { "F8", KEY_F8 },  { "F9", KEY_F9 },
@@ -250,6 +250,7 @@ static int dev_create(void)
         KEY_SPACE, KEY_ENTER, KEY_TAB, KEY_BACKSPACE, KEY_ESC,
         KEY_CAPSLOCK,
         KEY_LEFTSHIFT, KEY_LEFTCTRL, KEY_LEFTALT,
+        KEY_LEFTMETA, KEY_RIGHTMETA,
         KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN,
         KEY_HOME, KEY_END, KEY_PAGEUP, KEY_PAGEDOWN,
         KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6,

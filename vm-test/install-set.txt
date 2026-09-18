@@ -1,0 +1,35 @@
+# Accepted Cinnamon install set — TASK-0017 (Big 3.1 acceptance, 2026-09-18).
+#
+# The 22 runtime package names installed by the single `dnf install` of the
+# 3.1 acceptance run on task0017-fresh-vm. Derived from the published rpms/
+# set by dropping -devel/-debuginfo/-debugsource subpackages:
+#
+#   for f in rpms/*.rpm; do n=$(rpm -qp --qf '%{NAME}' "$f"); \
+#     case "$n" in *-devel|*-debuginfo|*-debugsource) ;; *) echo "$n";; esac; \
+#   done | sort -u
+#
+# Consumed by vm-test/run-tests.sh (Phase 1 copies it to the VM, Phase 4
+# verifies against it). Regenerate after any rpms/ change that adds or drops
+# a runtime package.
+cinnamon
+cinnamon-control-center
+cinnamon-desktop
+cinnamon-menus
+cinnamon-rocky-defaults
+cinnamon-session
+cinnamon-settings-daemon
+cjs
+gdk-pixbuf-parsers
+gnome-terminal
+gtk-layer-shell
+mozjs115
+muffin
+muffin-clutter
+muffin-cogl
+nemo
+python3-pillow
+python3-setproctitle
+python3-tinycss2
+python3-webencodings
+python3-xapp
+xapps-lib

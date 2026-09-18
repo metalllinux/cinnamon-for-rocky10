@@ -41,13 +41,13 @@ BuildRequires:  gtk4-devel
 BuildRequires:  gettext
 
 # Runtime dependencies of the Python settings app (cinnamon-settings.py),
-# which ships in this package. The app imports all three unguarded; Fedora
-# carries the same three Requires on the cinnamon package (verified on the
+# which ships in this package. The app imports all four unguarded; Fedora
+# carries the same four Requires on the cinnamon package (verified on the
 # Fedora 44 reference).
 Requires:       python3-setproctitle
 Requires:       python3-pillow
 Requires:       python3-tinycss2
-# cinnamon-settings imports xapp (bin/SettingsWidgets.py:10, xapp.os:33)
+# cinnamon-settings also imports xapp (bin/SettingsWidgets.py:10, xapp.os:33)
 Requires:       python3-xapp
 
 %description
