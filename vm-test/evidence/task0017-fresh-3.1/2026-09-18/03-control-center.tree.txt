@@ -1,0 +1,33 @@
+=== control-center process (full args) ===
+   4427 runuser -u gdmtest -- env XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus setsid bash -c exec /usr/bin/cinnamon-control-center
+   4429 /usr/bin/cinnamon-control-center
+=== control-center a11y tree (full, A11Y_APP=cinnamon-control-center) ===
+[application] 'cinnamon-control-center'
+  [frame] 'System Settings' @(0,0 794x268)
+    [panel] '' @(26,23 742x37)
+      [filler] '' @(702,27 62x28)
+        [button] 'Minimize' @(702,27 28x28)
+        [button] 'Close' @(736,27 28x28)
+      [filler] '' @(336,32 121x17)
+        [label] 'System Settings' @(336,32 121x17)
+    [filler] '' @(26,60 742x179)
+      [tool bar] '' @(26,60 742x44)
+        [panel] '' @(26,60 742x44)
+          [panel] '' @(26,60 742x44)
+            [filler] '' @(36,65 727x34)
+              [filler] '' @(36,65 96x34)
+                [button] 'All Settings' @(36,65 96x34)
+              [panel] '' @(132,65 631x34)
+                [filler] '' @(763,65 1x34)
+      [page tab list] '' @(26,104 742x135)
+        [page tab] '' @(-1,-1 -1x-1)
+          [scroll pane] '' @(27,105 740x133)
+            [viewport] '' @(28,106 738x131)
+              [filler] '' @(40,114 714x115)
+                [panel] 'C Modules' @(40,114 714x115)
+                  [filler] '' @(40,131 714x98)
+                    [layered pane] '' @(40,131 714x98)
+                      [icon] '' @(46,137 100x69)
+                  [label] 'C Modules' @(40,114 62x17)
+        [page tab] '' @(-1,-1 -1x-1)
+=== main-menu applet button: on-screen nodes in the top-left panel region ===

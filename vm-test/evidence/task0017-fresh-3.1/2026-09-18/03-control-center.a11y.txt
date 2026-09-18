@@ -1,0 +1,16 @@
+=== control-center process (gdmtest) ===
+(no control-center proc)
+=== control-center a11y tree (A11Y_USER=gdmtest), top of tree ===
+--- if the above is empty, try cinnamon-control-center app name ---
+cinnamon-control-center
+System Settings
+Minimize
+Close
+System Settings
+All Settings
+Lock
+C Modules
+C Modules
+Icon
+Name
+Description

@@ -1,0 +1,23 @@
+file: /home/howard/Linux/projects/cinnamon-for-rocky10/vm-test/evidence/task0017-fresh-3.1/2026-09-18/01-desktop-base.png
+size: 1280x800  total_pixels: 1024000
+unique_colours_raw: 18833
+unique_buckets_4bit: 219
+top_bucketed_colours:
+  #200020  30.59%
+  #300020  13.26%
+  #100020  10.16%
+  #300010   7.85%
+  #400020   5.13%
+  #101010   4.61%
+  #100030   4.55%
+  #200010   3.59%
+  #500030   3.53%
+  #300030   2.41%
+  #400000   2.30%
+  #400030   2.16%
+  #400010   2.02%
+  #500000   1.71%
+  #600030   1.34%
+max_single_bucket: 0.3059
+mean_rgb: (49,10,38)
+blankness: VARIED (multiple colours, not a solid fill)
