@@ -11,8 +11,6 @@ Source0:        %{name}-%{version}.tar.gz
 # surface from gdk_cairo_surface_create_from_pixbuf renders black).
 Patch0:         gnome-bg-wayland-surface.patch
 
-%global debug_package %{nil}
-
 BuildRequires:  meson >= 0.56.0
 BuildRequires:  ninja-build
 BuildRequires:  gcc
@@ -90,6 +88,9 @@ DESTDIR=%{buildroot} ninja -C builddir install
 * Thu Sep 17 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-2
 - TASK-0017: fix black wallpaper on Wayland by rendering the pixbuf onto a
   window-similar surface (gnome-bg-wayland-surface.patch)
+- Re-enable the debuginfo/debugsource subpackages (a stray
+  "%global debug_package %{nil}" had dropped them from the 2.el10 build;
+  every other C package in the tree ships them)
 
 * Sun Aug 09 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-1
 - Initial port to Rocky Linux 10 from Fedora spec

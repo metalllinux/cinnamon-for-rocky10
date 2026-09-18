@@ -1,6 +1,6 @@
 Name:           cinnamon-rocky-defaults
 Version:        1.0
-Release:        1.el10
+Release:        2.el10
 Summary:        Rocky Linux 10 branding defaults for the Cinnamon desktop
 
 License:        GPLv2+
@@ -74,6 +74,10 @@ glib-compile-schemas %{_datadir}/glib-2.0/schemas
 %{_datadir}/glib-2.0/schemas/10_cinnamon_rocky_branding.gschema.override
 
 %changelog
+* Fri Sep 18 2026 Team Chaotix <chaotix@metallinux.dev> - 1.0-2.el10
+- Ship the GPLv2 license text (Source0, byte-identical to the repository's
+  top-level LICENSE) (Omega TASK-0017)
+
 * Tue Sep 15 2026 Team Chaotix <chaotix@metallinux.dev> - 1.0-1
 - Initial package: wallpaper dconf system override and branding gschema
   override for the Cinnamon desktop on Rocky Linux 10

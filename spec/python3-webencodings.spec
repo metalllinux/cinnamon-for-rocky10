@@ -1,6 +1,6 @@
 Name:           python3-webencodings
 Version:        0.5.1
-Release:        1.el10
+Release:        2.el10
 Summary:        Character encoding aliases for legacy web content
 
 %global debug_package %{nil}
@@ -18,6 +18,9 @@ Source1:        webencodings-LICENSE
 
 BuildRequires:  python3-devel
 BuildRequires:  python3-pip
+# bdist_wheel for the legacy setup.py path with --no-build-isolation
+# (in an isolated environment pip would install wheel implicitly)
+BuildRequires:  python3-wheel
 
 # Runtime dependency of python3-tinycss2 (tinycss2 1.5.1 declares
 # webencodings >= 0.4), which the Cinnamon settings theme panel imports
@@ -44,9 +47,12 @@ install -m 0646 %{_sourcedir}/webencodings-LICENSE LICENSE
 %install
 # EL10's reduced python3-rpm-macros has no pyproject install macro, so
 # install with pip into the site-packages target. The sdist declares no
-# runtime dependencies. pip verifies the build-dependency hashes against
-# PyPI.
-python3 -m pip install --no-cache-dir --no-deps --target %{buildroot}%{python3_sitelib} .
+# runtime dependencies and ships no pyproject.toml (legacy setup.py path,
+# no build dependencies); --no-build-isolation skips the isolated
+# environment entirely, so the build needs no network access at all. The
+# bdist_wheel command comes from the BR'd python3-wheel package (EL10's
+# setuptools 69.0.3 predates the built-in bdist_wheel).
+python3 -m pip install --no-cache-dir --no-deps --no-build-isolation --target %{buildroot}%{python3_sitelib} .
 
 %files
 %license LICENSE
@@ -55,6 +61,11 @@ python3 -m pip install --no-cache-dir --no-deps --target %{buildroot}%{python3_s
 %{python3_sitelib}/webencodings-0.5.1.dist-info/
 
 %changelog
+* Fri Sep 18 2026 Team Chaotix <chaotix@metallinux.dev> - 0.5.1-2.el10
+- Ship the upstream BSD license (vendored as Source1, the PyPI sdist
+  carries none) (Omega TASK-0017); build with --no-build-isolation so the
+  build needs no network access (Omega TASK-0017)
+
 * Thu Sep 17 2026 Team Chaotix <chaotix@metallinux.dev> - 0.5.1-1.el10
 - Source build as a runtime dependency of python3-tinycss2, needed by the
   Cinnamon settings theme panel (TASK-0017); version matches the Fedora 44
