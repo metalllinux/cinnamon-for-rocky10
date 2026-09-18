@@ -61,6 +61,24 @@ ucmd() {
     fi
 }
 
+# gget: read a gsettings value, reporting precisely when it fails.
+# The old inline fallback said "schema absent" for BOTH a missing schema
+# and a missing key; the 3.2 inventory proved the screensaver schema
+# exists on the 3.2 VM while its 'mode' key is absent, so the two cases
+# must be told apart (Shadow TASK-0017 finding 8).
+gget() {
+    local schema="$1" kname="$2"
+    if ucmd gsettings list-schemas | grep -qx "$schema"; then
+        if ucmd gsettings list-keys "$schema" | grep -qx "$kname"; then
+            ucmd gsettings get "$schema" "$kname"
+        else
+            echo "key absent (schema present)"
+        fi
+    else
+        echo "schema absent"
+    fi
+}
+
 emit()  { printf '%s\n' "$@" >> "$REPORT"; }
 sect()  { emit ""; emit "### $1"; }
 key()   { emit "KEY: $1"; }
@@ -169,8 +187,8 @@ key "SCREENSAVER_COMMAND: $(command -v cinnamon-screensaver-command 2>/dev/null 
 key "SCREENSAVER_VERSION: $(cinnamon-screensaver-command --version 2>/dev/null || echo 'n/a')"
 key "SCREENSAVER_SERVICE: $(systemctl is-active cinnamon-screensaver 2>/dev/null || echo 'no service (6.7 renders the shield in-shell via js/ui/screensaver)')"
 key "SHELL_SCREENSAVER_CODE: $(ls -d /usr/share/cinnamon/js/ui/screensaver 2>/dev/null || echo 'absent')"
-key "SCREENSAVER_MODE: $(ucmd gsettings get org.cinnamon.desktop.screensaver mode 2>/dev/null || echo 'schema absent')"
-key "SCREENSAVER_LOCK_ENABLED: $(ucmd gsettings get org.cinnamon.desktop.screensaver lock-enabled 2>/dev/null || echo 'schema absent')"
+key "SCREENSAVER_MODE: $(gget org.cinnamon.desktop.screensaver mode)"
+key "SCREENSAVER_LOCK_ENABLED: $(gget org.cinnamon.desktop.screensaver lock-enabled)"
 
 # --- 10. Main menu + Cinnamon Settings menu ----------------------------------------------
 sect "MENU"
