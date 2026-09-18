@@ -7,10 +7,14 @@ License:        GPLv2+
 URL:            https://github.com/metalllinux/cinnamon-for-rocky10
 BuildArch:      noarch
 
-# No Source0: the package ships two small original config files that are
-# written inline in the install section below. House rule (.gitignore) keeps
-# source tarballs out of git, and this package has no upstream tarball to
-# fetch, so the spec is the single source of truth.
+# The package ships two small original config files written inline in the
+# install section below; the spec is the single source of truth for them
+# (house rule .gitignore keeps source tarballs out of git, and this package
+# has no upstream tarball to fetch). Source0 is the GPLv2 license text,
+# byte-identical to this repository's top-level LICENSE (the project it
+# ships defaults for is GPL-2.0 upstream).
+Source0:        GPLv2.txt
+# sha256: 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643
 
 # The scriptlets run `dconf update` and `glib-compile-schemas`, so the tools
 # must exist at install time. The wallpaper file and the icon theme entry are
@@ -33,6 +37,11 @@ logo bytes. The dconf override applies to all users until a user changes the
 wallpaper in Cinnamon Settings (the user db wins in the dconf profile chain).
 
 %install
+# License text (GPLv2, byte-identical to the repository's top-level
+# LICENSE).
+install -d %{buildroot}%{_datadir}/licenses/%{name}
+install -m 0644 %{_sourcedir}/GPLv2.txt %{buildroot}%{_datadir}/licenses/%{name}/LICENSE
+
 # dconf system keyfile. dconf 0.40 reads keyfiles flat from
 # /etc/dconf/db/<db>.d/ (subdirectories are not scanned, only locks/ is
 # special-cased), so the file goes directly in local.d/.
@@ -60,6 +69,7 @@ dconf update
 glib-compile-schemas %{_datadir}/glib-2.0/schemas
 
 %files
+%license %{_datadir}/licenses/%{name}/LICENSE
 %{_sysconfdir}/dconf/db/local.d/10_cinnamon_rocky_wallpaper
 %{_datadir}/glib-2.0/schemas/10_cinnamon_rocky_branding.gschema.override
 

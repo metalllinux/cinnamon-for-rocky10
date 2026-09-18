@@ -19,6 +19,12 @@ BuildRequires:  python3-pip
 # one already-guarded import, upstream. Version matches the Fedora 44
 # reference (python3-tinycss2-1.5.1-2.fc44).
 Requires:       python3 >= 3.12
+# Importing tinycss2 pulls in tinycss2/ast.py, which does
+# `from webencodings import ascii_lower` at module level (ast.py:8, verified
+# in the 1.5.1 sdist). rpmbuild does not parse pip dist-info METADATA into
+# RPM Requires, so the runtime dependency must be declared here
+# (Omega TASK-0017).
+Requires:       python3-webencodings
 
 %description
 tinycss2 is a CSS tokenizer and parser for CSS 3, conforming to the W3C CSS
@@ -35,12 +41,12 @@ no EL10 or EPEL repo carries it (TASK-0017).
 %install
 # EL10's reduced python3-rpm-macros has no pyproject install macro, so
 # install with pip into the site-packages target. --no-deps: the single
-# runtime dependency (webencodings >= 0.4) becomes an RPM Requires via the
-# dist-info metadata, satisfied by python3-webencodings in this repo. pip
-# verifies the build-dependency hashes against PyPI.
+# runtime dependency (webencodings >= 0.4) is declared as an RPM Requires
+# above; rpmbuild does not parse pip dist-info METADATA.
 python3 -m pip install --no-cache-dir --no-deps --target %{buildroot}%{python3_sitelib} .
 
 %files
+%license LICENSE
 %dir %{python3_sitelib}/tinycss2/
 %{python3_sitelib}/tinycss2/*
 %{python3_sitelib}/tinycss2-1.5.1.dist-info/
