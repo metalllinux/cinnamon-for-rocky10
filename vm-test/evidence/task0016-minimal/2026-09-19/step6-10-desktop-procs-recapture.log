@@ -1,0 +1,63 @@
+=== t0016 step 6 recapture: full desktop process list ===
+=== run: 2026-09-19T07:30:42Z on task0016-minimal (192.168.122.142) ===
+=== purpose: the original step6-6-desktop-procs.log was captured seconds after login, before the
+=== desktop had fully spun up (2 lines). This recapture runs ~5.4 h after the session started,
+=== with the desktop fully running, to back INSTALL.md step 6's 'full desktop' end-state claim.
+=== Commands: loginctl show-session 16 | grep -E '^(Type|State)'; ps -u gdmtest -ww -o pid,cmd ===
+
+--- loginctl show-session 16 (Type/State) ---
+Service=gdm-password
+Type=wayland
+State=active
+
+--- ps -u gdmtest -ww -o pid,cmd ---
+    PID CMD
+   3560 /usr/lib/systemd/systemd --user
+   3562 (sd-pam)
+   3573 /usr/bin/gnome-keyring-daemon --daemonize --login
+   3584 /usr/libexec/gdm-wayland-session --handle-registration cinnamon-session-cinnamon --wayland
+   3590 /usr/bin/dbus-broker-launch --scope user
+   3594 dbus-broker --log 4 --controller 10 --machine-id b13ab51d9c96504de6b909fff54b3402 --max-bytes 100000000000000 --max-fds 25000000000000 --max-matches 5000000000
+   3599 /usr/libexec/cinnamon-session-binary --session cinnamon-wayland
+   3674 /usr/bin/cinnamon --replace
+   3695 /usr/libexec/gvfsd
+   3703 /usr/libexec/at-spi-bus-launcher
+   3709 /usr/bin/dbus-broker-launch --config-file=/usr/share/defaults/at-spi2/accessibility.conf --scope user
+   3710 dbus-broker --log 4 --controller 9 --machine-id b13ab51d9c96504de6b909fff54b3402 --max-bytes 100000000000000 --max-fds 6400000 --max-matches 5000000000
+   3713 /usr/bin/Xwayland :0 -rootless -noreset -accessx -core -auth /run/user/1000/.muffin-Xwaylandauth.DG0GV3 -listen 4 -listen 5 -displayfd 6 -initfd 7
+   3715 /usr/libexec/gvfs-udisks2-volume-monitor
+   3723 /usr/libexec/gvfs-goa-volume-monitor
+   3727 /usr/libexec/goa-daemon
+   3735 /usr/libexec/goa-identity-service
+   3762 /usr/libexec/dconf-service
+   3763 ibus-daemon --panel disable
+   3772 /usr/libexec/ibus-dconf
+   3773 /usr/libexec/ibus-extension-gtk3
+   3775 /usr/libexec/ibus-portal
+   3794 /usr/libexec/at-spi2-registryd --use-gnome-session
+   3795 /usr/bin/csd-media-keys
+   3801 /usr/bin/csd-settings-remap
+   3806 /usr/bin/csd-clipboard
+   3807 /usr/bin/csd-housekeeping
+   3808 /usr/bin/csd-power
+   3809 /usr/bin/csd-xsettings
+   3811 /usr/bin/csd-a11y-settings
+   3814 /usr/bin/csd-keyboard
+   3815 /usr/bin/csd-screensaver-proxy
+   3819 /usr/bin/csd-background
+   3851 /usr/bin/pipewire
+   3852 /usr/bin/wireplumber
+   3853 /usr/bin/pipewire-pulse
+   3886 /usr/libexec/ibus-engine-simple
+   3991 /usr/libexec/geoclue-2.0/demos/agent
+   3996 /usr/bin/nemo-desktop
+   3998 /usr/libexec/tracker-miner-fs-3
+   4003 /usr/libexec/evolution-data-server/evolution-alarm-notify
+   4026 /usr/libexec/evolution-source-registry
+   4035 /usr/libexec/evolution-calendar-factory
+   4046 /usr/libexec/evolution-addressbook-factory
+   4060 /usr/libexec/gvfsd-metadata
+   4077 /usr/libexec/gvfsd-trash --spawner :1.6 /org/gtk/gvfs/exec_spaw/0
+
+--- desktop core process count (the doc's five-surface backing set) ---
+17

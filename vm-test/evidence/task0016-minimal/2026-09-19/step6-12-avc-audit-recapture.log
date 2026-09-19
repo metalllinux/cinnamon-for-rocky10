@@ -1,0 +1,13 @@
+=== t0016 step 6 recapture: AVC denial check over the full audit log ===
+=== run: 2026-09-19T07:30:49Z on task0016-minimal (192.168.122.142) ===
+=== purpose: the committed record proved SELinux mode only (step6-8-getenforce.log); the
+=== 'no AVC denials' claim had no committed output. This covers the entire audit log
+=== (~5.4 h of session uptime at capture time).
+=== Commands: getenforce; grep -c 'avc: denied' /var/log/audit/audit.log ===
+
+--- getenforce ---
+Enforcing
+
+--- grep -c "avc: denied" /var/log/audit/audit.log ---
+0
+(0 = no AVC denials in the full audit log)
