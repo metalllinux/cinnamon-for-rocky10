@@ -20,7 +20,8 @@ dependencies and future updates.
 1. Clone or copy the project to any directory on the target machine.
 
 2. Run the repository setup script. The script installs `createrepo_c` if
-   missing, generates repository metadata, writes
+   missing, generates repository metadata when `rpms/repodata/` is absent
+   (a fresh clone ships valid metadata, so generation is skipped), writes
    `/etc/yum.repos.d/cinnamon-rocky10.repo`, enables the CRB repository,
    and validates that the repository is readable before finishing.
 
@@ -67,6 +68,92 @@ dependencies and future updates.
 5. Reboot and log in at the GDM greeter. Select the Cinnamon (Wayland)
    session. GDM on EL10 is Wayland-only, so that is the session the set
    provides.
+
+## Minimal server (no display manager)
+
+The Quick start covers a machine that is becoming a desktop. This section
+covers the same path from the other end. You start on a fresh minimal
+Rocky Linux 10.2 server with no display manager, no X server, and no
+desktop packages, and you end at the running Cinnamon desktop. That is
+the verified minimal-server path. The start-state facts and the GDM
+behavior come from a bare-metal minimal server (verified 2026-08-30), and
+the install steps are the current set's single `dnf install`,
+re-verified end-to-end on a fresh minimal VM on 2026-09-19.
+
+A display manager is required to run a desktop, and a minimal server has
+none to start. The procedure therefore has two halves. Steps 1 to 3
+install the desktop, step 4 adds the login path, and steps 5 to 6 boot it
+and log in. Until step 4 changes the default target, the machine stays at
+the command line.
+
+1. Get the project onto the machine. Clone or copy
+   `metalllinux/cinnamon-for-rocky10` to any directory, keeping
+   `repo-setup/` and `rpms/` (the 64 RPMs and the `repodata/` directory)
+   intact. Verify the transfer by comparing the sha256 sums of the RPMs
+   on both sides. The bare-metal run diffed the manifests and the diff
+   was empty.
+
+2. Run the repository setup script from the project root.
+
+   ```
+   sudo ./repo-setup/setup-repo.sh
+   ```
+
+   The success marker is `=== Repository setup complete ===` with exit
+   code 0.
+
+3. Install the complete set, the 22 names from Quick start step 3.
+
+   ```
+   sudo dnf install -y \
+     cinnamon cinnamon-control-center cinnamon-desktop cinnamon-menus \
+     cinnamon-rocky-defaults cinnamon-session cinnamon-settings-daemon \
+     cjs gdk-pixbuf-parsers gnome-terminal gtk-layer-shell mozjs115 \
+     muffin muffin-clutter muffin-cogl nemo \
+     python3-pillow python3-setproctitle python3-tinycss2 \
+     python3-webencodings python3-xapp xapps-lib
+   ```
+
+   The set pulls in no display manager and no X server. dnf installs only
+   the dependencies the set declares, none of the 22 names declares a
+   display manager or an X server, and `xorg-x11-server-Xorg` is in no
+   Rocky 10.2 repository. The graphics pull-in is the mesa Wayland stack
+   plus X11 link-time libraries.
+
+4. Install the display manager and switch the default target.
+
+   ```
+   sudo dnf install -y gdm gnome-shell
+   sudo systemctl enable gdm
+   sudo systemctl set-default graphical.target
+   ```
+
+   GDM enables itself in its post-install step. `systemctl is-enabled
+   gdm` reports `enabled` immediately after the install (verified on the
+   bare-metal server), so the `enable` line is a no-op kept for parity
+   with the Quick start. The load-bearing line is `set-default
+   graphical.target`. A minimal install defaults to `multi-user.target`,
+   under which GDM, though enabled, never starts and the machine stays at
+   the getty on tty1.
+
+5. Reboot, or start GDM on the running system.
+
+   ```
+   sudo reboot
+   ```
+
+   `sudo systemctl start gdm` brings the greeter up without a reboot.
+
+6. At the GDM greeter, select the "Cinnamon (Wayland)" session and log in.
+   The verified end state is the full desktop. The panel, the wallpaper,
+   the terminal, the settings app, and the main menu all work, and
+   `loginctl` reports the session as `Type=wayland`.
+
+The X11 path is a dead end on this target. `xorg-x11-server-Xorg` is in
+no Rocky 10.2 repository, so the X11 session file that the `cinnamon` RPM
+ships, `/usr/share/xsessions/cinnamon.desktop`, has no X server to run
+on. The working session is "Cinnamon (Wayland)". X11 applications still
+work inside it, through Xwayland, which the GDM install pulls in.
 
 ## Manual repository setup
 
@@ -115,8 +202,11 @@ sudo dnf install ./rpms/*.rpm
 This is the path the `vm-test/run-tests.sh` harness uses. The 2026-09-19
 re-verification installed all 64 RPMs this way on the first attempt, with
 no `--allowerasing` and no ordered-install fallback. Use this method only
-if the repository method is not feasible. You give up repository features
-such as `dnf remove` tracking and update notifications.
+if the repository method is not feasible. The packages still register in
+the rpm database and in dnf history, so `dnf remove` works on them as
+usual. What this method gives up is repository origin. dnf has no source
+to update these packages from, so a newer version requires a repository
+or a newer local build.
 
 ## Prerequisites
 
