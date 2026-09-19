@@ -92,10 +92,11 @@ the command line.
 
 1. Get the project onto the machine. Clone or copy
    `metalllinux/cinnamon-for-rocky10` to any directory, keeping
-   `repo-setup/` and `rpms/` (the 64 RPMs and the `repodata/` directory)
-   intact. Verify the transfer by comparing the sha256 sums of the RPMs
-   on both sides. The bare-metal run diffed the manifests and the diff
-   was empty.
+   `repo-setup/` and `rpms/` (the 64 RPMs) intact. A fresh clone has
+   no `rpms/repodata/` directory because it is not tracked in git;
+   the setup script in step 2 generates it when absent. Verify the
+   transfer by comparing the sha256 sums of the RPMs on both sides.
+   The bare-metal run diffed the manifests and the diff was empty.
 
 2. Run the repository setup script from the project root.
 
