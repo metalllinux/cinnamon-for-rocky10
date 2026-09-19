@@ -1,0 +1,6 @@
+ 1   42 gdm     -     1030 manager-early -    no -
+14    0 root    -     3311 user          -    no -
+15    0 root    -     3316 manager-early -    no -
+16 1000 gdmtest seat0 3478 user          tty2 no -
+17 1000 gdmtest -     3560 manager       -    no -
+c1   42 gdm     seat0 1018 greeter       tty1 no -

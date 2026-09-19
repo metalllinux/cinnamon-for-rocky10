@@ -1,0 +1,16 @@
+=== step 5: post-reboot state, 2026-09-19T01:48:56Z ===
+ 01:48:56 up 1 min,  1 user,  load average: 0.11, 0.07, 0.02
+boot-since: 2026-09-19 01:47:19
+default-target: graphical.target
+gdm: active
+getty@tty1: inactive
+--- graphical units ---
+  gdm.service                loaded active running GNOME Display Manager
+--- loginctl ---
+ 1 42 gdm  -     1030 manager-early -    no -
+ 4  0 root -     2970 user          -    no -
+ 5  0 root -     2975 manager-early -    no -
+c1 42 gdm  seat0 1018 greeter       tty1 no -
+Name=gdm
+Service=systemd-user
+Type=unspecified

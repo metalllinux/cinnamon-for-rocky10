@@ -1,0 +1,2 @@
+3584 /usr/libexec/gdm-wayland-session --handle-registration cinnamon-session-cinnamon --wayland
+3599 /usr/libexec/cinnamon-session-binary --session cinnamon-wayland
