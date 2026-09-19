@@ -1,0 +1,45 @@
+=== step 4: gdm + gnome-shell, 2026-09-19T01:39:06Z ===
+pre-step4 count: 646
+  python3-pyudev-0.24.1-10.el10.noarch                                          
+  rest-0.9.1-11.el10_2.1.x86_64                                                 
+  samba-client-libs-4.23.5-107.el10_2.x86_64                                    
+  samba-common-4.23.5-107.el10_2.noarch                                         
+  samba-common-libs-4.23.5-107.el10_2.x86_64                                    
+  speex-1.2.0-19.el10.x86_64                                                    
+  switcheroo-control-2.6-7.el10.x86_64                                          
+  taglib-1.13.1-1.el10.x86_64                                                   
+  tecla-45.0-5.el10.x86_64                                                      
+  tuned-2.27.0-2.el10_2.noarch                                                  
+  tuned-ppd-2.27.0-2.el10_2.noarch                                              
+  twolame-libs-0.4.0-6.el10.x86_64                                              
+  virt-what-1.27-3.el10.x86_64                                                  
+  vulkan-loader-1.4.328.1-1.el10.x86_64                                         
+  wavpack-5.6.0-9.el10.x86_64                                                   
+  wireless-regdb-2025.10.07-1.el10.noarch                                       
+  wpa_supplicant-1:2.11-5.el10.x86_64                                           
+  wsdd-0.8-3.el10.noarch                                                        
+  xdg-desktop-portal-gnome-47.3-1.el10.x86_64                                   
+  xdg-user-dirs-0.18-7.el10.x86_64                                              
+  xdg-user-dirs-gtk-0.11-6.el10.x86_64                                          
+  xkbcomp-1.4.7-3.el10.x86_64                                                   
+  xorg-x11-server-Xwayland-24.1.9-4.el10_2.3.x86_64                             
+
+Complete!
+install-rc=0
+--- is-enabled gdm immediately after install, BEFORE enable line ---
+enabled
+--- running documented: sudo systemctl enable gdm ---
+enable-rc=0
+--- still at getty? ---
+default-target: multi-user.target
+getty@tty1: active
+gdm: inactive
+=== step 4b: set-default, 2026-09-19T01:40:25Z ===
+Removed '/etc/systemd/system/default.target'.
+Created symlink '/etc/systemd/system/default.target' → '/usr/lib/systemd/system/graphical.target'.
+set-default-rc=0
+default-target-now: graphical.target
+step4 added: 178 packages
+gdm-47.0-24.el10_2.x86_64
+gnome-shell-49.4-9.el10_2.rocky.0.2.x86_64
+xorg-x11-server-Xwayland-24.1.9-4.el10_2.3.x86_64
