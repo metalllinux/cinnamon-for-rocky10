@@ -1,0 +1,410 @@
+=== t0016 step 6 drive, 2026-09-19T02:00:50Z ===
+Cinnamon for Rocky Linux 10 (local)             1.5 MB/s | 1.5 kB     00:00    
+Package gcc-14.3.1-4.4.el10.x86_64 is already installed.
+Package kernel-headers-6.12.0-211.55.1.el10_2.x86_64 is already installed.
+Package python3-dbus-1.3.2-8.el10.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+gdm-drive: ukey built at /root/gdm-harness/ukey
+gdm-drive: greeter session up after 0s; settling 10s
+--- user-list stage text ---
+gnome-shell
+Main stage
+Window group
+gdmtest
+gdmtest
+Not listed?
+Empty User
+Back
+Submit
+Login code: 
+Cancel
+Cancel
+Caps lock is on
+Login Options
+Accessibility
+Sep 19  2‎∶01 AM
+Dwell Click
+Keyboard
+en
+System
+Top window group
+Low battery power: please plug in before installing updates
+Some applications are busy or have unsaved work
+Other users are logged in
+Selection
+Screen
+Window
+Area Selection
+Screen Selection
+Window Selection
+Take Screenshot
+Record Screen
+Capture
+Show Pointer
+Feedback group
+No Notifications
+Clear all notifications
+Previous month
+September
+Next month
+Saturday
+Sunday
+Monday
+Tuesday
+Wednesday
+Thursday
+Friday
+30
+31
+01
+02
+03
+04
+05
+06
+07
+08
+09
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+01
+02
+03
+04
+05
+06
+07
+08
+09
+10
+Add World Clocks…
+Single Click
+Double Click
+Drag
+Secondary Click
+English (US)
+en
+Show Keyboard Layout
+Keyboard Settings
+Take Screenshot
+Settings
+Lock Screen
+Power Off Menu
+Mute
+Volume
+Open sound output menu
+Microphone
+Open sound input menu
+Brightness
+Open brightness menu
+Wired
+Open wired connections menu
+Open Wi–Fi menu
+Open mobile connections menu
+Open Bluetooth tethers menu
+Open VPN menu
+Bluetooth
+Open Bluetooth menu
+Power Mode
+Balanced
+Open power profiles menu
+Night Light
+Dark Style
+Do Not Disturb
+Keyboard
+Open keyboard brightness menu
+Airplane Mode
+Auto Rotate
+No Background Apps
+Power Off
+Suspend
+Restart…
+Power Off…
+Log Out…
+Switch User…
+Sound Output
+Dummy Output
+Sound Settings
+Sound Input
+Sound Settings
+Brightness
+Wired Connections
+Wired
+Disconnect Wired
+Wired
+Disconnect
+Wired
+Turn Off
+Wired Settings
+Wi–Fi
+All Networks
+Mobile Connections
+Mobile Broadband Settings
+Mobile Broadband Settings
+Bluetooth Tethers
+Bluetooth Settings
+VPN
+VPN Settings
+Bluetooth
+Turn on Bluetooth to connect to devices
+Bluetooth Settings
+Power Mode
+Performance
+Balanced
+Power Saver
+Power Settings
+Keyboard Brightness
+Off
+Low
+High
+Background Apps
+Apps known to be running without a window
+App Settings
+Copy
+Paste
+Copy
+Paste
+High Contrast
+Zoom
+Large Text
+Screen Reader
+Screen Keyboard
+Visual Alerts
+Sticky Keys
+Slow Keys
+Bounce Keys
+Mouse Keys
+gdm-drive: clicked visible node 'Not listed?' at 513,412
+gdm-drive: caps probe: entry @(489,465 302x20), typing at 640,475
+gdm-drive: caps probe: typed 'abc', readback 'abc'
+gdm-drive: caps probe: compositor caps verified LOWERCASE by readback (0 toggle(s))
+gdm-drive: caps probe: kernel caps LED now 0 (parity record only)
+password text		489	465	239	20	0
+gdm-drive: clicked visible node 'Login Options' at 1160,744
+--- session menu text (item 6) ---
+gnome-shell
+Main stage
+Window group
+gdmtest
+gdmtest
+Not listed?
+gdmtest
+gdmtest
+Back
+Submit
+Login code: 
+Cancel
+Cancel
+Caps lock is on
+Login Options
+Accessibility
+Sep 19  2‎∶01 AM
+Dwell Click
+Keyboard
+en
+System
+Top window group
+Low battery power: please plug in before installing updates
+Some applications are busy or have unsaved work
+Other users are logged in
+Selection
+Screen
+Window
+Area Selection
+Screen Selection
+Window Selection
+Take Screenshot
+Record Screen
+Capture
+Show Pointer
+Feedback group
+No Notifications
+Clear all notifications
+Previous month
+September
+Next month
+Saturday
+Sunday
+Monday
+Tuesday
+Wednesday
+Thursday
+Friday
+30
+31
+01
+02
+03
+04
+05
+06
+07
+08
+09
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+01
+02
+03
+04
+05
+06
+07
+08
+09
+10
+Add World Clocks…
+Single Click
+Double Click
+Drag
+Secondary Click
+English (US)
+en
+Show Keyboard Layout
+Keyboard Settings
+Take Screenshot
+Settings
+Lock Screen
+Power Off Menu
+Mute
+Volume
+Open sound output menu
+Microphone
+Open sound input menu
+Brightness
+Open brightness menu
+Wired
+Open wired connections menu
+Open Wi–Fi menu
+Open mobile connections menu
+Open Bluetooth tethers menu
+Open VPN menu
+Bluetooth
+Open Bluetooth menu
+Power Mode
+Balanced
+Open power profiles menu
+Night Light
+Dark Style
+Do Not Disturb
+Keyboard
+Open keyboard brightness menu
+Airplane Mode
+Auto Rotate
+No Background Apps
+Power Off
+Suspend
+Restart…
+Power Off…
+Log Out…
+Switch User…
+Sound Output
+Dummy Output
+Sound Settings
+Sound Input
+Sound Settings
+Brightness
+Wired Connections
+Wired
+Disconnect Wired
+Wired
+Disconnect
+Wired
+Turn Off
+Wired Settings
+Wi–Fi
+All Networks
+Mobile Connections
+Mobile Broadband Settings
+Mobile Broadband Settings
+Bluetooth Tethers
+Bluetooth Settings
+VPN
+VPN Settings
+Bluetooth
+Turn on Bluetooth to connect to devices
+Bluetooth Settings
+Power Mode
+Performance
+Balanced
+Power Saver
+Power Settings
+Keyboard Brightness
+Off
+Low
+High
+Background Apps
+Apps known to be running without a window
+App Settings
+Copy
+Paste
+Copy
+Paste
+High Contrast
+Zoom
+Large Text
+Screen Reader
+Screen Keyboard
+Visual Alerts
+Sticky Keys
+Slow Keys
+Bounce Keys
+Mouse Keys
+Login Options
+Password
+Session Type
+Cinnamon (Wayland)
+GNOME
+gdm-drive: clicked visible node 'Cinnamon (Wayland)' at 1162,638
+INPUT SENT
+gdm-drive: VERIFIED session 16 type=wayland state=active proc='cinnamon-session'
+--- session 16 ---
+Name=gdmtest
+Remote=no
+Service=gdm-password
+Type=wayland
+State=active
+--- desktop procs ---
+3584 /usr/libexec/gdm-wayland-session --handle-registration cinnamon-session-cinnamon --wayland
+3599 /usr/libexec/cinnamon-session-binary --session cinnamon-wayland
+=== DONE ===

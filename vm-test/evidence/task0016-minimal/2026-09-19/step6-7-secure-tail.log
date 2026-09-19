@@ -1,0 +1,60 @@
+Sep 19 01:47:15 localhost sshd-session[9118]: Disconnected from user root 192.168.122.1 port 41334
+Sep 19 01:47:15 localhost sshd-session[9101]: pam_unix(sshd:session): session closed for user root
+Sep 19 01:47:15 localhost sshd[1008]: Received signal 15; terminating.
+Sep 19 01:47:27 localhost sshd[973]: Server listening on 0.0.0.0 port 22.
+Sep 19 01:47:27 localhost sshd[973]: Server listening on :: port 22.
+Sep 19 01:47:27 localhost (systemd)[1030]: pam_unix(systemd-user:session): session opened for user gdm(uid=42) by gdm(uid=0)
+Sep 19 01:47:27 localhost gdm-launch-environment][1018]: pam_unix(gdm-launch-environment:session): session opened for user gdm(uid=42) by (uid=0)
+Sep 19 01:47:30 localhost sshd-session[2893]: Accepted publickey for root from 192.168.122.1 port 34558 ssh2: ED25519 SHA256:TAs9anRDojDoomVgqYhgWN4LH4MOEsSxtFXWU4IEGhM
+Sep 19 01:47:30 localhost (systemd)[2899]: pam_unix(systemd-user:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:47:30 localhost sshd-session[2893]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:47:30 localhost sshd-session[2910]: Received disconnect from 192.168.122.1 port 34558:11: disconnected by user
+Sep 19 01:47:30 localhost sshd-session[2910]: Disconnected from user root 192.168.122.1 port 34558
+Sep 19 01:47:30 localhost sshd-session[2893]: pam_unix(sshd:session): session closed for user root
+Sep 19 01:48:56 localhost sshd-session[2970]: Accepted publickey for root from 192.168.122.1 port 50100 ssh2: ED25519 SHA256:TAs9anRDojDoomVgqYhgWN4LH4MOEsSxtFXWU4IEGhM
+Sep 19 01:48:56 localhost (systemd)[2975]: pam_unix(systemd-user:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:48:56 localhost sshd-session[2970]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:48:56 localhost sshd-session[2986]: Received disconnect from 192.168.122.1 port 50100:11: disconnected by user
+Sep 19 01:48:56 localhost sshd-session[2986]: Disconnected from user root 192.168.122.1 port 50100
+Sep 19 01:48:56 localhost sshd-session[2970]: pam_unix(sshd:session): session closed for user root
+Sep 19 01:50:45 localhost sshd-session[3033]: Accepted publickey for root from 192.168.122.1 port 42542 ssh2: ED25519 SHA256:TAs9anRDojDoomVgqYhgWN4LH4MOEsSxtFXWU4IEGhM
+Sep 19 01:50:45 localhost (systemd)[3038]: pam_unix(systemd-user:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:50:45 localhost sshd-session[3033]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:50:45 localhost sshd-session[3050]: Received disconnect from 192.168.122.1 port 42542:11: disconnected by user
+Sep 19 01:50:45 localhost sshd-session[3050]: Disconnected from user root 192.168.122.1 port 42542
+Sep 19 01:50:45 localhost sshd-session[3033]: pam_unix(sshd:session): session closed for user root
+Sep 19 01:51:27 localhost sshd-session[3084]: Accepted publickey for root from 192.168.122.1 port 57268 ssh2: ED25519 SHA256:TAs9anRDojDoomVgqYhgWN4LH4MOEsSxtFXWU4IEGhM
+Sep 19 01:51:27 localhost (systemd)[3089]: pam_unix(systemd-user:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:51:27 localhost sshd-session[3084]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:51:27 localhost sudo[3126]:    root : PWD=/root ; USER=root ; COMMAND=/bin/dnf install -y gcc kernel-headers
+Sep 19 01:51:27 localhost sudo[3126]: pam_unix(sudo:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:51:33 localhost sudo[3126]: pam_unix(sudo:session): session closed for user root
+Sep 19 01:51:33 localhost sshd-session[3101]: Received disconnect from 192.168.122.1 port 57268:11: disconnected by user
+Sep 19 01:51:33 localhost sshd-session[3101]: Disconnected from user root 192.168.122.1 port 57268
+Sep 19 01:51:33 localhost sshd-session[3084]: pam_unix(sshd:session): session closed for user root
+Sep 19 01:51:33 localhost sshd-session[3174]: Accepted publickey for root from 192.168.122.1 port 57282 ssh2: ED25519 SHA256:TAs9anRDojDoomVgqYhgWN4LH4MOEsSxtFXWU4IEGhM
+Sep 19 01:51:33 localhost sshd-session[3174]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 01:51:33 localhost sshd-session[3178]: Received disconnect from 192.168.122.1 port 57282:11: disconnected by user
+Sep 19 01:51:33 localhost sshd-session[3178]: Disconnected from user root 192.168.122.1 port 57282
+Sep 19 01:51:33 localhost sshd-session[3174]: pam_unix(sshd:session): session closed for user root
+Sep 19 02:00:25 localhost sshd-session[3223]: Accepted publickey for root from 192.168.122.1 port 49550 ssh2: ED25519 SHA256:TAs9anRDojDoomVgqYhgWN4LH4MOEsSxtFXWU4IEGhM
+Sep 19 02:00:25 localhost (systemd)[3228]: pam_unix(systemd-user:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 02:00:25 localhost sshd-session[3223]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 02:00:25 localhost useradd[3265]: new group: name=gdmtest, GID=1000
+Sep 19 02:00:25 localhost useradd[3265]: new user: name=gdmtest, UID=1000, GID=1000, home=/home/gdmtest, shell=/bin/bash, from=none
+Sep 19 02:00:25 localhost sshd-session[3240]: Received disconnect from 192.168.122.1 port 49550:11: disconnected by user
+Sep 19 02:00:25 localhost sshd-session[3240]: Disconnected from user root 192.168.122.1 port 49550
+Sep 19 02:00:25 localhost sshd-session[3223]: pam_unix(sshd:session): session closed for user root
+Sep 19 02:00:25 localhost sshd-session[3274]: Accepted publickey for root from 192.168.122.1 port 49552 ssh2: ED25519 SHA256:TAs9anRDojDoomVgqYhgWN4LH4MOEsSxtFXWU4IEGhM
+Sep 19 02:00:25 localhost sshd-session[3274]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 02:00:25 localhost sshd-session[3278]: Received disconnect from 192.168.122.1 port 49552:11: disconnected by user
+Sep 19 02:00:25 localhost sshd-session[3278]: Disconnected from user root 192.168.122.1 port 49552
+Sep 19 02:00:25 localhost sshd-session[3274]: pam_unix(sshd:session): session closed for user root
+Sep 19 02:00:50 localhost sshd-session[3311]: Accepted publickey for root from 192.168.122.1 port 60584 ssh2: ED25519 SHA256:TAs9anRDojDoomVgqYhgWN4LH4MOEsSxtFXWU4IEGhM
+Sep 19 02:00:50 localhost (systemd)[3316]: pam_unix(systemd-user:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 02:00:50 localhost sshd-session[3311]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+Sep 19 02:02:08 localhost gdm-password][3478]: gkr-pam: unable to locate daemon control file
+Sep 19 02:02:08 localhost gdm-password][3478]: gkr-pam: stashed password to try later in open session
+Sep 19 02:02:08 localhost (systemd)[3560]: pam_unix(systemd-user:session): session opened for user gdmtest(uid=1000) by gdmtest(uid=0)
+Sep 19 02:02:08 localhost gdm-password][3478]: pam_unix(gdm-password:session): session opened for user gdmtest(uid=1000) by gdmtest(uid=0)
+Sep 19 02:02:08 localhost gdm-password][3478]: gkr-pam: gnome-keyring-daemon started properly and unlocked keyring
