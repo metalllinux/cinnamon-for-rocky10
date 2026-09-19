@@ -1,0 +1,77 @@
+=== setup-repo.sh run, 2026-09-19T01:27:59Z ===
+INFO: Project root : /root/cinnamon-for-rocky10
+INFO: RPMs directory: /root/cinnamon-for-rocky10/rpms
+INFO: Found 64 RPM files.
+INFO: createrepo_c not found. Installing...
+Rocky Linux 10 - BaseOS                          30 MB/s |  28 MB     00:00    
+Rocky Linux 10 - AppStream                      4.4 MB/s | 2.7 MB     00:00    
+Rocky Linux 10 - Extras                          11 kB/s | 5.8 kB     00:00    
+Dependencies resolved.
+================================================================================
+ Package                 Architecture Version             Repository       Size
+================================================================================
+Installing:
+ createrepo_c            x86_64       1.1.2-4.el10        appstream        78 k
+Installing dependencies:
+ createrepo_c-libs       x86_64       1.1.2-4.el10        appstream       106 k
+
+Transaction Summary
+================================================================================
+Install  2 Packages
+
+Total download size: 184 k
+Installed size: 456 k
+Downloading Packages:
+(1/2): createrepo_c-1.1.2-4.el10.x86_64.rpm     593 kB/s |  78 kB     00:00    
+(2/2): createrepo_c-libs-1.1.2-4.el10.x86_64.rp 643 kB/s | 106 kB     00:00    
+--------------------------------------------------------------------------------
+Total                                           305 kB/s | 184 kB     00:00     
+Rocky Linux 10 - AppStream                      1.6 MB/s | 1.6 kB     00:00    
+Importing GPG key 0x6FEDFC85:
+ Userid     : "Release Engineering (Rocky Linux 10) <releng@rockylinux.org>"
+ Fingerprint: FC22 6859 C086 0BF0 DDB9 5B08 5B10 6C73 6FED FC85
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-10
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : createrepo_c-libs-1.1.2-4.el10.x86_64                  1/2 
+  Installing       : createrepo_c-1.1.2-4.el10.x86_64                       2/2 
+  Running scriptlet: createrepo_c-1.1.2-4.el10.x86_64                       2/2 
+
+Installed:
+  createrepo_c-1.1.2-4.el10.x86_64     createrepo_c-libs-1.1.2-4.el10.x86_64    
+
+Complete!
+INFO: Repository metadata already present. Skipping generation.
+INFO: Installing /etc/yum.repos.d/cinnamon-rocky10.repo with baseurl=file:///root/cinnamon-for-rocky10/rpms
+INFO: Repository file installed at /etc/yum.repos.d/cinnamon-rocky10.repo.
+INFO: Enabling CRB (CodeReady Builder) repository...
+INFO: Refreshing repository metadata...
+Cinnamon for Rocky Linux 10 (local)             3.5 MB/s |  16 kB     00:00    
+Metadata cache created.
+
+=== Repository setup complete ===
+
+The 'cinnamon-rocky10' repository is now configured.
+Install Cinnamon with:
+
+  dnf install cinnamon
+
+To verify available packages:
+
+  dnf list available --repo cinnamon-rocky10
+
+setup-repo-rc=0
+--- /etc/yum.repos.d/cinnamon-rocky10.repo ---
+[cinnamon-rocky10]
+name=Cinnamon for Rocky Linux 10 (local)
+baseurl=file:///root/cinnamon-for-rocky10/rpms
+enabled=1
+gpgcheck=0
+metadata_expire=0
+module_hotfixes=0
+keepcache=0

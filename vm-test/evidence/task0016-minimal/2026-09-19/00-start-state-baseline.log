@@ -1,0 +1,20 @@
+=== start-state baseline, task0016-minimal, 2026-09-19T00:59:42Z ===
+NAME="Rocky Linux"
+VERSION="10.2 (Red Quartz)"
+
+total packages: 443
+package gdm is not installed
+package lightdm is not installed
+package sddm is not installed
+no xorg-x11-server-* or xwayland packages installed
+default-target: multi-user.target
+getty@tty1: active
+selinux: Enforcing
+package gnome-shell is not installed
+
+--- loginctl ---
+5 0 root - 4982 user          - no -
+6 0 root - 4987 manager-early - no -
+--- active graphical units ---
+  getty@tty1.service         loaded active running Getty on tty1
+  serial-getty@ttyS0.service loaded active running Serial Getty on ttyS0

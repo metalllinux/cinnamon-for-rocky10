@@ -1,0 +1,45 @@
+=== step 3 verification, 2026-09-19T01:33:05Z ===
+--- 22 named packages ---
+note: install-set.txt not on VM yet (vm-test/ not copied) — verifying against explicit list instead
+bash: line 1: /root/cinnamon-for-rocky10/vm-test/install-set.txt: No such file or directory
+cinnamon-6.7.4-3.el10.x86_64
+cinnamon-control-center-6.7.2-1.el10.x86_64
+cinnamon-desktop-6.7.2-2.el10.x86_64
+cinnamon-menus-6.7.0-1.el10.x86_64
+cinnamon-rocky-defaults-1.0-2.el10.noarch
+cinnamon-session-6.7.3-1.el10.x86_64
+cinnamon-settings-daemon-6.7.2-2.el10.x86_64
+cjs-6.4.0-1.el10.x86_64
+gdk-pixbuf-parsers-2.42.12-2.el10.x86_64
+gnome-terminal-3.54.5-1.el10.x86_64
+gtk-layer-shell-0.10.1-1.el10.x86_64
+mozjs115-115.29.0-1.el10.x86_64
+muffin-6.7.4-3.el10.x86_64
+muffin-clutter-6.7.4-3.el10.x86_64
+muffin-cogl-6.7.4-3.el10.x86_64
+nemo-6.7.4-2.el10.x86_64
+python3-pillow-12.3.0-2.el10.x86_64
+python3-setproctitle-1.3.7-2.el10.x86_64
+python3-tinycss2-1.5.1-2.el10.x86_64
+python3-webencodings-0.5.1-2.el10.x86_64
+python3-xapp-3.0.2-1.el10.x86_64
+xapps-lib-3.3.3-1.el10.x86_64
+--- DM check ---
+package gdm is not installed
+package lightdm is not installed
+package sddm is not installed
+--- X server check ---
+none installed
+--- diff pre vs post ---
+added: 200
+DM/X in diff:
+none
+--- session files ---
+/usr/share/xsessions/cinnamon.desktop:Exec=cinnamon-session-cinnamon
+/usr/share/wayland-sessions/cinnamon-wayland.desktop:Exec=cinnamon-session-cinnamon --wayland
+--- target state ---
+default-target: multi-user.target
+getty@tty1: active
+gdm unit: inactive
+22 0 root - 7072 user          - no -
+23 0 root - 7077 manager-early - no -
