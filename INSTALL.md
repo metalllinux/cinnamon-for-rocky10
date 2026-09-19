@@ -20,8 +20,12 @@ dependencies and future updates.
 1. Clone or copy the project to any directory on the target machine.
 
 2. Run the repository setup script. The script installs `createrepo_c` if
-   missing, generates repository metadata when `rpms/repodata/` is absent
-   (a fresh clone ships valid metadata, so generation is skipped), writes
+   missing and generates repository metadata when `rpms/repodata/` is
+   absent. A fresh clone has no metadata because the `repodata/` directory
+   is not tracked in git, so a fresh clone exercises the generation path,
+   and the `createrepo_c` self-install from AppStream works on a minimal
+   image. A copy that carries `repodata/` skips generation instead. The
+   procedure is correct on both paths. The script writes
    `/etc/yum.repos.d/cinnamon-rocky10.repo`, enables the CRB repository,
    and validates that the repository is readable before finishing.
 
