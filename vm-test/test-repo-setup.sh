@@ -311,12 +311,15 @@ test_error_handling() {
         record ".repo template has BASEURL_PLACEHOLDER" "FAIL"
     fi
 
-    # Test 6: .repo template has gpgcheck=0
-    log "Checking gpgcheck=0 in template..."
-    if grep -q "gpgcheck=0" "${PROJECT_DIR}/repo-setup/cinnamon-rocky10.repo"; then
-        record ".repo template gpgcheck=0" "PASS"
+    # Test 6: .repo template has gpgcheck=1 (TASK-0024 item 5: the repo
+    # now verifies package signatures against the rpm keyring; the
+    # pre-TASK-0024 template asserted gpgcheck=0, which is exactly the
+    # gap this task closes)
+    log "Checking gpgcheck=1 in template..."
+    if grep -q "gpgcheck=1" "${PROJECT_DIR}/repo-setup/cinnamon-rocky10.repo"; then
+        record ".repo template gpgcheck=1" "PASS"
     else
-        record ".repo template gpgcheck=0" "FAIL"
+        record ".repo template gpgcheck=1" "FAIL"
     fi
 
     # Test 7: .repo template has enabled=1
