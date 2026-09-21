@@ -1,6 +1,7 @@
 #!/bin/bash
-# sign-rpms.sh — sign the project RPMs in place with the dedicated
-# "Cinnamon for Rocky Linux 10" GPG key, then verify the whole set.
+# sign-rpms.sh — sign the project RPMs in place with the dedicated repo
+# signing GPG key, uid "metallinux Cinnamon for Rocky Linux (repo signing)
+# <repo-signing@metalinux.dev>", then verify the whole set.
 #
 # TASK-0024 items 2-3. Design and constraints: planning doc
 # planning/docs/TASK-0024-rpm-signing-gpgcheck.md, decisions D1/D2 (ratified
@@ -43,10 +44,10 @@ set -euo pipefail
 # -------------------------------------------------------------------
 # Constants
 # -------------------------------------------------------------------
-# Fingerprint of the dedicated signing key (public data). Recorded in the
-# planning doc item 1 after the user generates the key. Until then the script
-# refuses to run, at the check below.
-EXPECTED_FINGERPRINT="PENDING-ITEM-1"
+# Fingerprint of the dedicated signing key (public data; it ships inside the
+# public key). Recorded from item 1 (2026-09-21). The check below refuses to
+# run against any other keyring.
+EXPECTED_FINGERPRINT="1689676AF4D4F6FEC142B4429C0A8912FDA02785"
 
 # Dedicated keyring (host-local, mode 700) and sibling passphrase location
 # (D1). Overridable for testing via the environment; the production run uses

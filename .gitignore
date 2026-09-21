@@ -12,3 +12,22 @@ src/*.tar.xz
 # Generated repository metadata
 rpms/repodata/
 rpms/.repodata/
+
+# GPG key material (TASK-0024, user instruction 2026-09-21): private key
+# material must never be committed to this repository. Only the public key,
+# keys/cinnamon-rocky10-public.asc, is tracked.
+# A gpg keyring copied into the tree (whole or in part)
+.gnupg-cinnamon-rocky10/
+.gnupg-cinnamon-rocky10.passphrase/
+private-keys-v1.d/
+openpgp-revocs.d/
+# Passphrase files (the sibling location is a directory holding a file
+# named "passphrase"; cover both the directory and file spellings)
+passphrase
+*.passphrase
+# Private key exports (armored or binary); public exports are named
+# *-public.asc and remain trackable
+*-secret.asc
+*-private.asc
+*-secret.key
+*-private.key
