@@ -93,6 +93,20 @@ in `vm-test/evidence/` and `vm-test/parity/`.
   built, and the payloads matched the published set except build
   environment artifacts (LTO build-ids, pip direct_url paths).
 
+## Signing and release verification
+
+The 64 published RPMs are signed with a dedicated GPG key, and the
+repository installs with `gpgcheck=1`, so dnf verifies the signature of
+every package it installs. The public key ships in the repository at
+`keys/cinnamon-rocky10-public.asc` (fingerprint
+`1689676AF4D4F6FEC142B4429C0A8912FDA02785`), and
+`repo-setup/setup-repo.sh` imports it into the rpm keyring as part of
+repository setup. Each release is pinned to a git tag, and the sha256
+manifest at `rpms/SHA256SUMS` records the signed set. The "Verifying the
+release" section in INSTALL.md covers the two checks. The manifest
+verifies your copy against the released set, and the signature verifies
+the set against the key holder.
+
 ## Installation
 
 See [INSTALL.md](INSTALL.md) for step-by-step installation on a fresh Rocky
