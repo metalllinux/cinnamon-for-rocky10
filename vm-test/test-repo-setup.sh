@@ -355,11 +355,19 @@ test_vm_repo_setup() {
         "${PROJECT_DIR}/repo-setup/" \
         "root@${vm_ip}:/root/cinnamon-for-rocky10/repo-setup/" 2>&1 | tail -3
 
-    # Copy rpms/ directory to VM (only RPMs and repodata, not everything)
+    # Copy rpms/ directory to VM (only the RPMs and the SHA256SUMS
+    # manifest, not everything). rpms/repodata/ is deliberately
+    # excluded: it is gitignored (.gitignore line 13) and never ships
+    # with a clone, so a real follower's setup-repo.sh generates it
+    # from the RPMs. Copying a working-tree artifact would make the
+    # fresh-VM test exercise a state no user can reach — and a stale
+    # repodata (checksums from before the in-place re-sign, db60bb6)
+    # makes dnf refuse every package with "incorrect checksum"
+    # (TASK-0024 re-run at ce7b084, item 10 first full pass).
     log "Copying rpms/ to VM..."
     ssh_pin_opts "$vm_ip"
     # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
-    rsync -avz -e "ssh ${SSH_PIN_OPTS} -i ${SSH_KEY}" \
+    rsync -avz --exclude='repodata/' -e "ssh ${SSH_PIN_OPTS} -i ${SSH_KEY}" \
         "${PROJECT_DIR}/rpms/" \
         "root@${vm_ip}:/root/cinnamon-for-rocky10/rpms/" 2>&1 | tail -3
 
@@ -553,7 +561,13 @@ test_vm_repo_setup() {
     prereq_output=$(ssh_cmd "$vm_ip" \
         "dnf install -y gtk3 glib2 graphene libX11 libXrandr libXdamage libXext libXfixes libXi libXtst libICE libSM libxkbfile libwacom pipewire libdrm pulseaudio-libs libcanberra systemd gobject-introspection iso-codes xkeyboard-config cairo pango harfbuzz gdk-pixbuf2 libxml2 dbus atk at-spi2-atk fontconfig mesa-libEGL json-glib startup-notification readline 2>&1" || true)
 
-    if echo "$prereq_output" | grep -qi "Complete\|installed"; then
+    # No -q: under set -o pipefail, grep -q exits on the first match
+    # ("Installed size:" appears early in the dnf summary) while echo
+    # is still flushing a multi-hundred-KB capture; echo then dies
+    # with SIGPIPE (141) and pipefail reports the pipeline as failed —
+    # a false WARN even though the install completed (TASK-0024
+    # re-run at ce7b084). Reading to EOF avoids the early exit.
+    if echo "$prereq_output" | grep -i "Complete\|installed" >/dev/null; then
         record "Prerequisites installed" "PASS" "dependencies resolved"
     else
         record "Prerequisites installed" "WARN" "output may indicate issues: $(echo "$prereq_output" | tail -3)"
@@ -581,12 +595,20 @@ test_vm_repo_setup() {
         record "dnf install cinnamon" "FAIL" "exit code: ${install_rc}"
     fi
 
-    # Check that cinnamon is actually installed
-    local cinnamon_installed
-    cinnamon_installed=$(ssh_cmd "$vm_ip" \
-        "rpm -q cinnamon 2>/dev/null || echo not-installed" || echo "not-installed")
-    if [ "$cinnamon_installed" != "not-installed" ]; then
-        record "cinnamon package installed" "PASS" "$cinnamon_installed"
+    # Check that cinnamon is actually installed. TASK-0024 re-run at
+    # ce7b084: the previous form was inverted — `rpm -q` on a missing
+    # package prints "package cinnamon is not installed" to stdout
+    # (rc 1), so the captured string was never equal to "not-installed"
+    # and an uninstalled package recorded PASS with that text as its
+    # detail. Use the rc of `rpm -q --quiet`, the same two-step
+    # pattern Phase 5 uses for the 14-package check.
+    local cinnamon_installed=""
+    if ssh_cmd "$vm_ip" "rpm -q --quiet cinnamon" 2>/dev/null; then
+        cinnamon_installed=$(ssh_cmd "$vm_ip" \
+            "rpm -q --queryformat '%{VERSION}-%{RELEASE}' cinnamon" 2>/dev/null) || true
+    fi
+    if [ -n "$cinnamon_installed" ]; then
+        record "cinnamon package installed" "PASS" "cinnamon-${cinnamon_installed}"
     else
         record "cinnamon package installed" "FAIL" "cinnamon not found via rpm -q"
     fi
