@@ -27,6 +27,11 @@ PKG_VERIFY_LOG="${RESULTS_DIR}/package-verify.log"
 # Packages from INSTALL.md "Installed packages" table (lines 70-85).
 # Format: PACKAGE_NAME|EXPECTED_VERSION|DESCRIPTION
 # These are the "base" packages (not debuginfo, debugsource, or devel variants).
+# TASK-0024 re-run at ce7b084: the versions here must match the committed
+# release set (rpms/ filenames, cross-checked against rpms/SHA256SUMS).
+# Four pins predated the final rebuild (cinnamon-desktop/-settings-daemon
+# 6.7.2-2, nemo 6.7.4-2, cinnamon 6.7.4-3) and recorded false WARNs on
+# every run. Regenerate this table from rpms/ whenever the set is rebuilt.
 BASE_PACKAGES=(
     "mozjs115|115.29.0-1.el10|SpiderMonkey JavaScript engine runtime"
     "mozjs115-devel|115.29.0-1.el10|mozjs115 headers and pkg-config"
@@ -34,14 +39,14 @@ BASE_PACKAGES=(
     "muffin|6.7.4-3.el10|Cinnamon window manager compositor"
     "muffin-clutter|6.7.4-3.el10|Muffin Clutter rendering library"
     "muffin-cogl|6.7.4-3.el10|Muffin Cogl rendering library"
-    "cinnamon-desktop|6.7.2-1.el10|Desktop library and applet framework"
+    "cinnamon-desktop|6.7.2-2.el10|Desktop library and applet framework"
     "xapps-lib|3.3.3-1.el10|Shared Cinnamon application libraries"
     "cinnamon-session|6.7.3-1.el10|Session manager"
-    "cinnamon-settings-daemon|6.7.2-1.el10|Settings daemon"
+    "cinnamon-settings-daemon|6.7.2-2.el10|Settings daemon"
     "cinnamon-control-center|6.7.2-1.el10|Settings panel"
     "cinnamon-menus|6.7.0-1.el10|Menu configuration"
-    "nemo|6.7.4-1.el10|File manager"
-    "cinnamon|6.7.4-1.el10|Cinnamon desktop shell"
+    "nemo|6.7.4-2.el10|File manager"
+    "cinnamon|6.7.4-3.el10|Cinnamon desktop shell"
 )
 
 # Key files to verify after installation (from INSTALL.md and package contents)
