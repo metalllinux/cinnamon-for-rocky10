@@ -32,6 +32,8 @@ PKG_VERIFY_LOG="${RESULTS_DIR}/package-verify.log"
 # Four pins predated the final rebuild (cinnamon-desktop/-settings-daemon
 # 6.7.2-2, nemo 6.7.4-2, cinnamon 6.7.4-3) and recorded false WARNs on
 # every run. Regenerate this table from rpms/ whenever the set is rebuilt.
+# Note: test-repo-setup.sh carries its own inline copy of this table
+# (PKG_LIST, Phase 5) for the full harness run; keep both in lockstep.
 BASE_PACKAGES=(
     "mozjs115|115.29.0-1.el10|SpiderMonkey JavaScript engine runtime"
     "mozjs115-devel|115.29.0-1.el10|mozjs115 headers and pkg-config"
