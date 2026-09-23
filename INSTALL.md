@@ -254,6 +254,7 @@ from the signed bytes and committed to the repository.
 ```
 cd rpms
 sha256sum -c SHA256SUMS
+cd ..
 ```
 
 All 64 lines must report `OK`. This check answers one question. Is the
@@ -300,7 +301,7 @@ A fresh minimal Rocky Linux 10.2 system. The single `dnf install` resolves
 every runtime dependency from the local repository and the EL10 base
 repositories, so no manual dependency list is required. The verified runs
 needed none. The setup script enables the CRB repository automatically,
-and the manual path enables it in step 4.
+and the manual path enables it in step 5.
 
 ## Installed packages
 
