@@ -122,6 +122,15 @@ for tool in gpg gpg-connect-agent rpm xxd stat; do
     command -v "$tool" >/dev/null 2>&1 || die "required tool not found: ${tool}"
 done
 
+# The public key file must exist and be a valid armored public key before any
+# signing. The scratch keyring import in the verification step consumes it,
+# but a missing or corrupt file must fail here, before the in-place sign loop
+# mutates anything (pre-flight before mutation). An exported public key always
+# carries the armor header, so its absence marks the file empty or corrupt.
+[ -f "$KEYFILE" ] || die "GPG public key not found at ${KEYFILE}."
+grep -q "PGP PUBLIC KEY BLOCK-----" "$KEYFILE" \
+    || die "GPG public key file ${KEYFILE} is not a valid armored public key."
+
 # The keyring must hold exactly one secret key with the expected fingerprint.
 [ -d "$KEYRING_DIR" ] || die "keyring not found at ${KEYRING_DIR} (item 1 user step)."
 COLONS=$(gpg --with-colons -K 2>/dev/null) || die "gpg could not read the keyring at ${KEYRING_DIR}"
@@ -157,6 +166,19 @@ UID_STR=$(echo "$COLONS" | awk -F: '/^uid/{print $10; exit}')
 [ "$(stat -c '%a' "$PASSPHRASE_DIR")" = "700" ] || die "passphrase directory ${PASSPHRASE_DIR} must be mode 700."
 [ -f "$PASSPHRASE_FILE" ] || die "passphrase file missing: ${PASSPHRASE_FILE} (item 1 user step)."
 [ "$(stat -c '%a' "$PASSPHRASE_FILE")" = "600" ] || die "passphrase file ${PASSPHRASE_FILE} must be mode 600."
+# The file must be a single line; an optional trailing newline is fine, the
+# $(cat ...) below strips it. PRESET_PASSPHRASE answers OK for any valid hex
+# without verifying the bytes against the key, so a multi-line file would pass
+# the preset and only surface as an unprotect error at the first rpm --addsign.
+# Catching it here keeps the failure point clear. The check counts newlines in
+# the raw bytes and never prints the passphrase.
+NL_COUNT=$(tr -cd '\n' < "$PASSPHRASE_FILE" | wc -c)
+if [ "$NL_COUNT" -gt 1 ]; then
+    die "passphrase file ${PASSPHRASE_FILE} must be a single line, found ${NL_COUNT} newlines."
+fi
+if [ "$NL_COUNT" -eq 1 ] && [ "$(tail -c 1 "$PASSPHRASE_FILE" | wc -l)" -eq 0 ]; then
+    die "passphrase file ${PASSPHRASE_FILE} has an embedded newline (must be a single line)."
+fi
 
 # The consumer path (dnf under gpgcheck=1) verifies against the host rpm
 # keyring (the installed gpg-pubkey packages), not against this keyring.
@@ -199,10 +221,13 @@ fi
 PASS=$(cat "$PASSPHRASE_FILE")
 [ -n "$PASS" ] || die "passphrase file ${PASSPHRASE_FILE} is empty."
 PASS_HEX=$(printf '%s' "$PASS" | xxd -p | tr -d '\n')
-# No round-trip check here. Unhexing a hex string always yields the
-# original, so such a check could never fail. A malformed file, for
-# example a multi-line passphrase, is rejected by gpg-agent itself, which
-# then answers without an OK line and the preset step dies with its error.
+# No passphrase check here. The file is checked only for non-emptiness (just
+# above) and single-line-ness (in the pre-flight); the hex encoding is a
+# transformation, not a check. PRESET_PASSPHRASE is a cache operation: the
+# agent stores the hex-decoded bytes and answers OK for any valid hex without
+# verifying them against the key. If the bytes do not equal the key's actual
+# passphrase, the failure surfaces as an unprotect error in the first
+# rpm --addsign, not as a preset rejection.
 PASS=""
 
 # gpg 2.4.5 protocol (pinned): PRESET_PASSPHRASE <keygrip> -1 <hex>. The second
