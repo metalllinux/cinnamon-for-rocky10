@@ -279,7 +279,10 @@ for f in rpms/*.rpm; do rpm --checksig "$f"; done
 
 Every RPM must report `digests signatures OK`. The public key is
 `keys/cinnamon-rocky10-public.asc`, fingerprint
-`1689676AF4D4F6FEC142B4429C0A8912FDA02785`.
+`1689676AF4D4F6FEC142B4429C0A8912FDA02785`. Before trusting the key,
+compare this fingerprint against the value published out-of-band on
+metalinux.dev. The key file served by the repository is not an independent
+source of trust.
 
 ### Why both
 

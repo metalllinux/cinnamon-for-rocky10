@@ -6,7 +6,7 @@
 #
 # This script:
 #   1. Provisions a fresh Rocky Linux 10.2 VM (destroying any existing one)
-#   2. Copies repo-setup/ and rpms/ directories to the VM
+#   2. Copies repo-setup/, rpms/, and keys/ directories to the VM
 #   3. Runs setup-repo.sh to configure the local DNF repository
 #   4. Verifies the repository metadata is accessible via dnf
 #   5. Installs cinnamon via the local repository
@@ -363,13 +363,25 @@ test_vm_repo_setup() {
         "${PROJECT_DIR}/rpms/" \
         "root@${vm_ip}:/root/cinnamon-for-rocky10/rpms/" 2>&1 | tail -3
 
+    # Copy keys/ directory to VM. setup-repo.sh's key-import step reads
+    # keys/cinnamon-rocky10-public.asc from the project root; without it the
+    # fresh-VM run dies before it installs anything (Shadow blocker,
+    # TASK-0024 review chain).
+    log "Copying keys/ to VM..."
+    ssh_pin_opts "$vm_ip"
+    # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+    rsync -avz -e "ssh ${SSH_PIN_OPTS} -i ${SSH_KEY}" \
+        "${PROJECT_DIR}/keys/" \
+        "root@${vm_ip}:/root/cinnamon-for-rocky10/keys/" 2>&1 | tail -3
+
     # Verify files arrived
     local remote_repo_count
     remote_repo_count=$(ssh_cmd "$vm_ip" "find /root/cinnamon-for-rocky10/rpms/ -maxdepth 1 -name '*.rpm' | wc -l" || echo "0")
-    if [ "$remote_repo_count" -eq 48 ]; then
-        record "RPMs copied to VM" "PASS" "${remote_repo_count}/48 RPMs present"
+    # The set is 64 RPMs (TASK-0024 item 3 records the signed count).
+    if [ "$remote_repo_count" -eq 64 ]; then
+        record "RPMs copied to VM" "PASS" "${remote_repo_count}/64 RPMs present"
     else
-        record "RPMs copied to VM" "FAIL" "expected 48 RPMs, found ${remote_repo_count}"
+        record "RPMs copied to VM" "FAIL" "expected 64 RPMs, found ${remote_repo_count}"
     fi
 
     local remote_scripts
@@ -378,6 +390,14 @@ test_vm_repo_setup() {
         record "setup-repo.sh copied to VM" "PASS"
     else
         record "setup-repo.sh copied to VM" "FAIL" "not found on VM"
+    fi
+
+    local remote_key
+    remote_key=$(ssh_cmd "$vm_ip" "test -f /root/cinnamon-for-rocky10/keys/cinnamon-rocky10-public.asc && echo present" 2>/dev/null || true)
+    if [ "$remote_key" = "present" ]; then
+        record "public key copied to VM" "PASS"
+    else
+        record "public key copied to VM" "FAIL" "keys/cinnamon-rocky10-public.asc not found on VM"
     fi
 
     log ""

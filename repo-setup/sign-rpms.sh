@@ -17,16 +17,18 @@
 # How it works:
 #   1. Pre-flight: the dedicated keyring holds exactly one secret key with
 #      the recorded fingerprint, the passphrase file exists with the right
-#      modes, and the public key is already in the rpm keyring (required for
-#      rpm --checksig verification).
-#   2. Preset the passphrase into gpg-agent via gpg-connect-agent. The
-#      passphrase is read from the 600-mode sibling file, hex-encoded, and
-#      sent on stdin only. It never appears in argv, and the script must
-#      never be run with set -x or -x, or the trace would print it
-#      (AGENTS.md section 4).
+#      modes, and the public key is already in the host rpm keyring (for
+#      the consumer path, dnf under gpgcheck=1).
+#   2. Refuse to run under set -x / -x (self-checked at startup). Preset
+#      the passphrase into gpg-agent via gpg-connect-agent. The passphrase
+#      is read from the 600-mode sibling file, hex-encoded, and sent on
+#      stdin only. It never appears in argv, and the trace can never print
+#      it (AGENTS.md section 4).
 #   3. Sign every unsigned RPM in rpms/ in place with rpm --addsign.
-#   4. Clear the preset from gpg-agent on every exit path (EXIT trap).
-#   5. Verify the whole set with rpm --checksig and report.
+#   4. Clear the preset from gpg-agent and remove the scratch verification
+#      keyring on every exit path (EXIT trap).
+#   5. Verify the whole set against a scratch rpm keyring that holds only
+#      the expected key, so the signer is pinned, and report.
 #
 # The keyring is host-local and never lives in the repo tree. It is the
 # dedicated keyring ~/.gnupg-cinnamon-rocky10 (mode 700) unless GNUPGHOME is
@@ -40,6 +42,20 @@
 # source citations and the empirical proof.
 
 set -euo pipefail
+
+# Refuse to run under xtrace (bash -x or set -x). With tracing on, bash
+# echoes every command to the script's stderr, including the heredoc that
+# carries the passphrase hex to gpg-connect-agent. The passphrase must
+# never reach a log (AGENTS.md section 4), so dying at startup is the only
+# safe behaviour. $- lists the active shell flags and carries x when
+# tracing is on; BASHOPTS does not list it in a script shell, so it is the
+# wrong probe.
+case "$-" in
+    *x*)
+        echo "ERROR: sign-rpms.sh refuses to run under set -x / bash -x (the passphrase would be traced to stderr)." >&2
+        exit 1
+        ;;
+esac
 
 # -------------------------------------------------------------------
 # Constants
@@ -102,7 +118,7 @@ if [ -z "$EXPECTED_FINGERPRINT" ] || [ "$EXPECTED_FINGERPRINT" = "PENDING-ITEM-1
 fi
 
 # Tooling.
-for tool in gpg gpg-connect-agent rpm; do
+for tool in gpg gpg-connect-agent rpm xxd stat; do
     command -v "$tool" >/dev/null 2>&1 || die "required tool not found: ${tool}"
 done
 
@@ -142,13 +158,21 @@ UID_STR=$(echo "$COLONS" | awk -F: '/^uid/{print $10; exit}')
 [ -f "$PASSPHRASE_FILE" ] || die "passphrase file missing: ${PASSPHRASE_FILE} (item 1 user step)."
 [ "$(stat -c '%a' "$PASSPHRASE_FILE")" = "600" ] || die "passphrase file ${PASSPHRASE_FILE} must be mode 600."
 
-# rpm --checksig verifies against the rpm keyring (the installed gpg-pubkey
-# packages), not against this keyring. The public key must be imported once
-# with root; the import is idempotent and the check below detects it.
+# The consumer path (dnf under gpgcheck=1) verifies against the host rpm
+# keyring (the installed gpg-pubkey packages), not against this keyring.
+# The public key must be imported once with root; the import is
+# idempotent and the check below detects it. Step 5 does not depend on
+# this keyring, it verifies against a scratch keyring.
+#
+# rpm -q takes a package name pattern. The previous form piped rpm -qa
+# into grep -q, and the first match could SIGPIPE rpm before the check
+# finished; under pipefail that is a spurious failure. rpm names imported
+# keys gpg-pubkey-<keyid>-<import-timestamp>, so the pattern keeps the
+# keyid prefix and globs the timestamp (same rule as setup-repo.sh).
 KEYID8="${FPR: -8}"
 KEYID8=$(echo "$KEYID8" | tr 'A-F' 'a-f')
-if ! rpm -qa | grep -q "^gpg-pubkey-${KEYID8}-"; then
-    die "public key ${KEYID8} is not in the rpm keyring (required for rpm --checksig). Import it once with: sudo rpm --import ${KEYFILE}"
+if ! rpm -q "gpg-pubkey-${KEYID8}-*" >/dev/null 2>&1; then
+    die "public key ${KEYID8} is not in the host rpm keyring (required for the consumer path). Import it once with: sudo rpm --import ${KEYFILE}"
 fi
 
 # The rpms/ directory must exist and contain RPMs.
@@ -175,9 +199,10 @@ fi
 PASS=$(cat "$PASSPHRASE_FILE")
 [ -n "$PASS" ] || die "passphrase file ${PASSPHRASE_FILE} is empty."
 PASS_HEX=$(printf '%s' "$PASS" | xxd -p | tr -d '\n')
-# Round-trip check: a multi-line file would not survive the hex round trip.
-ROUND=$(printf '%s' "$PASS_HEX" | xxd -r -p)
-[ "$ROUND" = "$PASS" ] || die "passphrase file must be a single line (no embedded newlines)."
+# No round-trip check here. Unhexing a hex string always yields the
+# original, so such a check could never fail. A malformed file, for
+# example a multi-line passphrase, is rejected by gpg-agent itself, which
+# then answers without an OK line and the preset step dies with its error.
 PASS=""
 
 # gpg 2.4.5 protocol (pinned): PRESET_PASSPHRASE <keygrip> -1 <hex>. The second
@@ -195,8 +220,10 @@ PASS_HEX=""
 PRESET_DONE=1
 info "Passphrase preset into gpg-agent (keygrip ${KEYGRIP})."
 
-# Clear the preset on every exit path.
-clear_preset() {
+# Clear the preset and remove the scratch verification keyring on every
+# exit path. SIGNER_ROOT is set later, in the verification step; the :-
+# default keeps the trap safe before that point.
+cleanup() {
     if [ "${PRESET_DONE:-0}" = "1" ]; then
         gpg-connect-agent --homedir "$KEYRING_DIR" -- <<EOF 2>/dev/null
 CLEAR_PASSPHRASE ${KEYGRIP}
@@ -204,8 +231,11 @@ CLEAR_PASSPHRASE ${KEYGRIP}
 EOF
         info "Passphrase cleared from gpg-agent."
     fi
+    if [ -n "${SIGNER_ROOT:-}" ]; then
+        rm -rf "${SIGNER_ROOT}"
+    fi
 }
-trap clear_preset EXIT
+trap cleanup EXIT
 
 # -------------------------------------------------------------------
 # Sign the unsigned RPMs in place
@@ -236,13 +266,28 @@ for rpm_file in "$RPMS_DIR"/*.rpm; do
 done
 
 # -------------------------------------------------------------------
-# Verify the whole set
+# Verify the whole set against the pinned signing key
 # -------------------------------------------------------------------
-info "Verifying ${RPM_TOTAL} RPMs with rpm --checksig..."
+# The pin. rpm -K answers "does a valid signature exist, from any key in
+# the keyring it consults." The host keyring also holds other pre-existing
+# keys, so a signature from any of them would have passed a host-keyring
+# check. Instead, the set is verified against a scratch rpm keyring, a
+# --root directory with a fresh rpmdb holding exactly one key, the expected
+# signing key, imported from the repository's public key file. Only a
+# signature by that key can verify there; an unsigned package or a package
+# signed by any other key fails. No sudo is needed, the scratch rpmdb
+# lives in a 700-mode directory the script owns.
+info "Verifying ${RPM_TOTAL} RPMs against the pinned key ${EXPECTED_FINGERPRINT}..."
+SIGNER_ROOT=$(mktemp -d)
+mkdir -p "${SIGNER_ROOT}/var/lib/rpm"
+rpm --root "${SIGNER_ROOT}" --import "${KEYFILE}" >/dev/null 2>&1 \
+    || die "could not import ${KEYFILE} into the scratch verification keyring."
 for rpm_file in "$RPMS_DIR"/*.rpm; do
     [ -e "$rpm_file" ] || continue
     name="$(basename "$rpm_file")"
-    rpm --checksig "$rpm_file" 2>/dev/null | grep -qi "signatures OK" || die "signature verification failed for ${name}."
+    if ! rpm --root "${SIGNER_ROOT}" -K "$rpm_file" 2>/dev/null | grep -qi "signatures OK"; then
+        die "verification against ${EXPECTED_FINGERPRINT} failed for ${name} (unsigned, or signed by a different key)."
+    fi
 done
 
 # -------------------------------------------------------------------
@@ -254,4 +299,4 @@ echo ""
 info "Signed now       : ${SIGNED_COUNT}"
 info "Already signed   : ${SKIPPED_COUNT}"
 info "Total verified   : ${RPM_TOTAL}"
-info "All RPMs in ${RPMS_DIR} carry a valid signature from ${FPR}."
+info "All RPMs in ${RPMS_DIR} carry a valid signature from the pinned key ${EXPECTED_FINGERPRINT}."
