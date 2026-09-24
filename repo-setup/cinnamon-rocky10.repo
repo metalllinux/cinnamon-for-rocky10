@@ -8,7 +8,7 @@
 name=Cinnamon for Rocky Linux 10 (local)
 baseurl=BASEURL_PLACEHOLDER
 enabled=1
-gpgcheck=0
+gpgcheck=1
 metadata_expire=0
 module_hotfixes=0
 keepcache=0

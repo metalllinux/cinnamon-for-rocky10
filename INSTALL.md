@@ -25,9 +25,14 @@ dependencies and future updates.
    is not tracked in git, so a fresh clone exercises the generation path,
    and the `createrepo_c` self-install from AppStream works on a minimal
    image. A copy that carries `repodata/` skips generation instead. The
-   procedure is correct on both paths. The script writes
-   `/etc/yum.repos.d/cinnamon-rocky10.repo`, enables the CRB repository,
-   and validates that the repository is readable before finishing.
+   procedure is correct on both paths. The script then imports the
+   repository's public GPG key from `keys/cinnamon-rocky10-public.asc`
+   into the rpm keyring and writes
+   `/etc/yum.repos.d/cinnamon-rocky10.repo` with `gpgcheck=1`, so dnf
+   verifies the signature of every package it installs against that key,
+   the same model the EL base repositories use. It enables the CRB
+   repository and validates that the repository is readable before
+   finishing.
 
    ```
    sudo ./repo-setup/setup-repo.sh
@@ -174,7 +179,18 @@ sudo dnf install -y createrepo_c
 sudo createrepo_c /path/to/cinnamon-for-rocky10/rpms/
 ```
 
-3. Create `/etc/yum.repos.d/cinnamon-rocky10.repo` with the following
+3. Import the repository's public GPG key into the rpm keyring, from the
+   project root.
+```
+sudo rpm --import keys/cinnamon-rocky10-public.asc
+```
+The key is at `keys/cinnamon-rocky10-public.asc` (fingerprint
+`1689676AF4D4F6FEC142B4429C0A8912FDA02785`). dnf verifies package
+signatures against the rpm keyring, so this import is what makes the
+`gpgcheck=1` line in step 4 mean anything. Importing a key that is
+already present is a no-op, so a re-run is safe.
+
+4. Create `/etc/yum.repos.d/cinnamon-rocky10.repo` with the following
    content, replacing the baseurl with the absolute path to your rpms/
    directory.
 ```
@@ -182,18 +198,22 @@ sudo createrepo_c /path/to/cinnamon-for-rocky10/rpms/
 name=Cinnamon for Rocky Linux 10 (local)
 baseurl=file:///path/to/cinnamon-for-rocky10/rpms/
 enabled=1
-gpgcheck=0
+gpgcheck=1
 metadata_expire=0
 module_hotfixes=0
 keepcache=0
 ```
+The `gpgcheck=1` line turns on signature verification. dnf checks each
+package's signature against the key from step 3 and refuses any package
+that does not verify. There is no `gpgkey=` line because the key already
+lives in the rpm keyring.
 
-4. Enable CRB.
+5. Enable CRB.
 ```
 sudo dnf config-manager --set-enabled crb
 ```
 
-5. Install the complete set with the single command from Quick start step
+6. Install the complete set with the single command from Quick start step
    3, then install the display manager as in Quick start step 4 and
    reboot.
 
@@ -213,13 +233,75 @@ usual. What this method gives up is repository origin. dnf has no source
 to update these packages from, so a newer version requires a repository
 or a newer local build.
 
+## Verifying the release
+
+The released set is pinned to a git tag and carries two independent
+checks, one for each failure mode that a plain install would not catch.
+The first signed release is `v1.0.0`, and every future republish gets a
+new tag, because the set is only ever published forward at a new tag.
+Clone at the tag so both checks run against exactly what the tag pins.
+
+```
+git clone --depth 1 --branch v1.0.0 https://github.com/metalllinux/cinnamon-for-rocky10
+cd cinnamon-for-rocky10
+```
+
+### The sha256 manifest, corruption and drift
+
+The manifest is `rpms/SHA256SUMS`, a sha256 list of all 64 RPMs generated
+from the signed bytes and committed to the repository.
+
+```
+cd rpms
+sha256sum -c SHA256SUMS
+cd ..
+```
+
+All 64 lines must report `OK`. This check answers one question. Is the
+copy you have, byte for byte, the set the tag released. It catches a
+corrupted copy, a partial clone, and a `rpms/` directory that has drifted
+from the manifest. What it cannot catch is a tree in which both the RPMs
+and the manifest were changed together, because the check compares the
+copy to the tree, and the tree is its own baseline.
+
+### The GPG signature, origin tampering
+
+Every RPM in the set is signed with the repository's private key. dnf
+verifies the signature of every package it installs once the key is
+imported, whether by `setup-repo.sh` in Quick start or by step 3 of the
+manual path. An attacker without the private key cannot re-sign, so a set
+that dnf accepts under `gpgcheck=1` is a set the key holder signed. You
+can verify the same thing directly, without dnf.
+
+```
+sudo rpm --import keys/cinnamon-rocky10-public.asc
+for f in rpms/*.rpm; do rpm --checksig "$f"; done
+```
+
+Every RPM must report `digests signatures OK`. The public key is
+`keys/cinnamon-rocky10-public.asc`, fingerprint
+`1689676AF4D4F6FEC142B4429C0A8912FDA02785`. Before trusting the key,
+compare this fingerprint against the value published out-of-band on
+metalinux.dev. The key file served by the repository is not an independent
+source of trust.
+
+### Why both
+
+The division of labor is the point, and it is why a complete check runs
+both. The manifest verifies the copy against the trusted baseline pinned
+at the tag, and catches transfer corruption and drift. The signature
+verifies the origin, and catches a tampered set that a matching manifest
+would accept, because re-signing needs the private key. A set that passes
+both is the set that was released, and the copy that arrived is the set
+that was signed.
+
 ## Prerequisites
 
 A fresh minimal Rocky Linux 10.2 system. The single `dnf install` resolves
 every runtime dependency from the local repository and the EL10 base
 repositories, so no manual dependency list is required. The verified runs
 needed none. The setup script enables the CRB repository automatically,
-and the manual path enables it in step 4.
+and the manual path enables it in step 5.
 
 ## Installed packages
 

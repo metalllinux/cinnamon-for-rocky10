@@ -6,7 +6,7 @@
 #
 # This script:
 #   1. Provisions a fresh Rocky Linux 10.2 VM (destroying any existing one)
-#   2. Copies repo-setup/ and rpms/ directories to the VM
+#   2. Copies repo-setup/, rpms/, and keys/ directories to the VM
 #   3. Runs setup-repo.sh to configure the local DNF repository
 #   4. Verifies the repository metadata is accessible via dnf
 #   5. Installs cinnamon via the local repository
@@ -311,12 +311,15 @@ test_error_handling() {
         record ".repo template has BASEURL_PLACEHOLDER" "FAIL"
     fi
 
-    # Test 6: .repo template has gpgcheck=0
-    log "Checking gpgcheck=0 in template..."
-    if grep -q "gpgcheck=0" "${PROJECT_DIR}/repo-setup/cinnamon-rocky10.repo"; then
-        record ".repo template gpgcheck=0" "PASS"
+    # Test 6: .repo template has gpgcheck=1 (TASK-0024 item 5: the repo
+    # now verifies package signatures against the rpm keyring; the
+    # pre-TASK-0024 template asserted gpgcheck=0, which is exactly the
+    # gap this task closes)
+    log "Checking gpgcheck=1 in template..."
+    if grep -q "gpgcheck=1" "${PROJECT_DIR}/repo-setup/cinnamon-rocky10.repo"; then
+        record ".repo template gpgcheck=1" "PASS"
     else
-        record ".repo template gpgcheck=0" "FAIL"
+        record ".repo template gpgcheck=1" "FAIL"
     fi
 
     # Test 7: .repo template has enabled=1
@@ -352,21 +355,41 @@ test_vm_repo_setup() {
         "${PROJECT_DIR}/repo-setup/" \
         "root@${vm_ip}:/root/cinnamon-for-rocky10/repo-setup/" 2>&1 | tail -3
 
-    # Copy rpms/ directory to VM (only RPMs and repodata, not everything)
+    # Copy rpms/ directory to VM (only the RPMs and the SHA256SUMS
+    # manifest, not everything). rpms/repodata/ is deliberately
+    # excluded: it is gitignored (.gitignore line 13) and never ships
+    # with a clone, so a real follower's setup-repo.sh generates it
+    # from the RPMs. Copying a working-tree artifact would make the
+    # fresh-VM test exercise a state no user can reach — and a stale
+    # repodata (checksums from before the in-place re-sign, db60bb6)
+    # makes dnf refuse every package with "incorrect checksum"
+    # (TASK-0024 re-run at ce7b084, item 10 first full pass).
     log "Copying rpms/ to VM..."
     ssh_pin_opts "$vm_ip"
     # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
-    rsync -avz -e "ssh ${SSH_PIN_OPTS} -i ${SSH_KEY}" \
+    rsync -avz --exclude='repodata/' -e "ssh ${SSH_PIN_OPTS} -i ${SSH_KEY}" \
         "${PROJECT_DIR}/rpms/" \
         "root@${vm_ip}:/root/cinnamon-for-rocky10/rpms/" 2>&1 | tail -3
+
+    # Copy keys/ directory to VM. setup-repo.sh's key-import step reads
+    # keys/cinnamon-rocky10-public.asc from the project root; without it the
+    # fresh-VM run dies before it installs anything (Shadow blocker,
+    # TASK-0024 review chain).
+    log "Copying keys/ to VM..."
+    ssh_pin_opts "$vm_ip"
+    # shellcheck disable=SC2086  # SSH_PIN_OPTS is intentionally word-split
+    rsync -avz -e "ssh ${SSH_PIN_OPTS} -i ${SSH_KEY}" \
+        "${PROJECT_DIR}/keys/" \
+        "root@${vm_ip}:/root/cinnamon-for-rocky10/keys/" 2>&1 | tail -3
 
     # Verify files arrived
     local remote_repo_count
     remote_repo_count=$(ssh_cmd "$vm_ip" "find /root/cinnamon-for-rocky10/rpms/ -maxdepth 1 -name '*.rpm' | wc -l" || echo "0")
-    if [ "$remote_repo_count" -eq 48 ]; then
-        record "RPMs copied to VM" "PASS" "${remote_repo_count}/48 RPMs present"
+    # The set is 64 RPMs (TASK-0024 item 3 records the signed count).
+    if [ "$remote_repo_count" -eq 64 ]; then
+        record "RPMs copied to VM" "PASS" "${remote_repo_count}/64 RPMs present"
     else
-        record "RPMs copied to VM" "FAIL" "expected 48 RPMs, found ${remote_repo_count}"
+        record "RPMs copied to VM" "FAIL" "expected 64 RPMs, found ${remote_repo_count}"
     fi
 
     local remote_scripts
@@ -375,6 +398,14 @@ test_vm_repo_setup() {
         record "setup-repo.sh copied to VM" "PASS"
     else
         record "setup-repo.sh copied to VM" "FAIL" "not found on VM"
+    fi
+
+    local remote_key
+    remote_key=$(ssh_cmd "$vm_ip" "test -f /root/cinnamon-for-rocky10/keys/cinnamon-rocky10-public.asc && echo present" 2>/dev/null || true)
+    if [ "$remote_key" = "present" ]; then
+        record "public key copied to VM" "PASS"
+    else
+        record "public key copied to VM" "FAIL" "keys/cinnamon-rocky10-public.asc not found on VM"
     fi
 
     log ""
@@ -530,7 +561,13 @@ test_vm_repo_setup() {
     prereq_output=$(ssh_cmd "$vm_ip" \
         "dnf install -y gtk3 glib2 graphene libX11 libXrandr libXdamage libXext libXfixes libXi libXtst libICE libSM libxkbfile libwacom pipewire libdrm pulseaudio-libs libcanberra systemd gobject-introspection iso-codes xkeyboard-config cairo pango harfbuzz gdk-pixbuf2 libxml2 dbus atk at-spi2-atk fontconfig mesa-libEGL json-glib startup-notification readline 2>&1" || true)
 
-    if echo "$prereq_output" | grep -qi "Complete\|installed"; then
+    # No -q: under set -o pipefail, grep -q exits on the first match
+    # ("Installed size:" appears early in the dnf summary) while echo
+    # is still flushing a multi-hundred-KB capture; echo then dies
+    # with SIGPIPE (141) and pipefail reports the pipeline as failed —
+    # a false WARN even though the install completed (TASK-0024
+    # re-run at ce7b084). Reading to EOF avoids the early exit.
+    if echo "$prereq_output" | grep -i "Complete\|installed" >/dev/null; then
         record "Prerequisites installed" "PASS" "dependencies resolved"
     else
         record "Prerequisites installed" "WARN" "output may indicate issues: $(echo "$prereq_output" | tail -3)"
@@ -558,12 +595,20 @@ test_vm_repo_setup() {
         record "dnf install cinnamon" "FAIL" "exit code: ${install_rc}"
     fi
 
-    # Check that cinnamon is actually installed
-    local cinnamon_installed
-    cinnamon_installed=$(ssh_cmd "$vm_ip" \
-        "rpm -q cinnamon 2>/dev/null || echo not-installed" || echo "not-installed")
-    if [ "$cinnamon_installed" != "not-installed" ]; then
-        record "cinnamon package installed" "PASS" "$cinnamon_installed"
+    # Check that cinnamon is actually installed. TASK-0024 re-run at
+    # ce7b084: the previous form was inverted — `rpm -q` on a missing
+    # package prints "package cinnamon is not installed" to stdout
+    # (rc 1), so the captured string was never equal to "not-installed"
+    # and an uninstalled package recorded PASS with that text as its
+    # detail. Use the rc of `rpm -q --quiet`, the same two-step
+    # pattern Phase 5 uses for the 14-package check.
+    local cinnamon_installed=""
+    if ssh_cmd "$vm_ip" "rpm -q --quiet cinnamon" 2>/dev/null; then
+        cinnamon_installed=$(ssh_cmd "$vm_ip" \
+            "rpm -q --queryformat '%{VERSION}-%{RELEASE}' cinnamon" 2>/dev/null) || true
+    fi
+    if [ -n "$cinnamon_installed" ]; then
+        record "cinnamon package installed" "PASS" "cinnamon-${cinnamon_installed}"
     else
         record "cinnamon package installed" "FAIL" "cinnamon not found via rpm -q"
     fi
@@ -605,7 +650,13 @@ test_vm_repo_setup() {
     log "=== Phase 5: Verify all 14 base packages ==="
     log ""
 
-    # Use the existing verify-install-packages.sh approach inline
+    # Use the existing verify-install-packages.sh approach inline.
+    # Pin table (authoritative for this harness). Each entry is
+    # "name|version-release|description" and must match the RPM
+    # filename in rpms/ (the build output is the source of truth).
+    # A second copy of this table lives in verify-install-packages.sh
+    # (BASE_PACKAGES) for the standalone TASK-0005 path; when rpms/
+    # is rebuilt, update both tables in lockstep.
     local PKG_LIST=(
         "mozjs115|115.29.0-1.el10|SpiderMonkey JavaScript engine runtime"
         "mozjs115-devel|115.29.0-1.el10|mozjs115 headers and pkg-config"
@@ -613,14 +664,14 @@ test_vm_repo_setup() {
         "muffin|6.7.4-3.el10|Cinnamon window manager compositor"
         "muffin-clutter|6.7.4-3.el10|Muffin Clutter rendering library"
         "muffin-cogl|6.7.4-3.el10|Muffin Cogl rendering library"
-        "cinnamon-desktop|6.7.2-1.el10|Desktop library and applet framework"
+        "cinnamon-desktop|6.7.2-2.el10|Desktop library and applet framework"
         "xapps-lib|3.3.3-1.el10|Shared Cinnamon application libraries"
         "cinnamon-session|6.7.3-1.el10|Session manager"
-        "cinnamon-settings-daemon|6.7.2-1.el10|Settings daemon"
+        "cinnamon-settings-daemon|6.7.2-2.el10|Settings daemon"
         "cinnamon-control-center|6.7.2-1.el10|Settings panel"
         "cinnamon-menus|6.7.0-1.el10|Menu configuration"
-        "nemo|6.7.4-1.el10|File manager"
-        "cinnamon|6.7.4-1.el10|Cinnamon desktop shell"
+        "nemo|6.7.4-2.el10|File manager"
+        "cinnamon|6.7.4-3.el10|Cinnamon desktop shell"
     )
 
     local pkg_ok=0

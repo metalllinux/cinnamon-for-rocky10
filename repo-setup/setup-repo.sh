@@ -11,8 +11,10 @@
 #   1. Verify the rpms/ directory and its metadata exist.
 #   2. Install createrepo_c if missing.
 #   3. Generate metadata with createrepo_c if the repodata/ directory is absent.
-#   4. Write /etc/yum.repos.d/cinnamon-rocky10.repo pointing at the rpms/ path.
-#   5. Enable the CRB (CodeReady Builder) repository.
+#   4. Import the repo GPG public key into the rpm keyring.
+#   5. Write /etc/yum.repos.d/cinnamon-rocky10.repo (gpgcheck=1)
+#      pointing at the rpms/ path.
+#   6. Enable the CRB (CodeReady Builder) repository.
 #
 # Requires: sudo privileges, dnf, Rocky Linux 10 (or compatible).
 #
@@ -32,6 +34,12 @@ set -euo pipefail
 # -------------------------------------------------------------------
 REPO_NAME="cinnamon-rocky10"
 REPO_FILE="/etc/yum.repos.d/${REPO_NAME}.repo"
+# Short GPG key id, lowercase as rpm names it: last 8 hex of fingerprint
+# 1689676AF4D4F6FEC142B4429C0A8912FDA02785. rpm 4.19 names imported key
+# packages gpg-pubkey-<keyid>-<import-timestamp>; the 8-hex width is
+# verified on the host (package gpg-pubkey-fda02785-6ab101f4, TASK-0024
+# item 1). Public data; the key ships at keys/cinnamon-rocky10-public.asc.
+KEY_ID="fda02785"
 
 # -------------------------------------------------------------------
 # Helpers
@@ -107,7 +115,34 @@ else
 fi
 
 # -------------------------------------------------------------------
-# Step 3 — Install the .repo file
+# Step 3 — Import the GPG public key into the rpm keyring
+# -------------------------------------------------------------------
+# TASK-0024 D3: dnf verifies RPM signatures against the rpm keyring
+# (the same model as the EL base repos), so the public key is imported
+# here and the .repo file written below carries gpgcheck=1 with no
+# gpgkey= line. A file:// gpgkey pointing into the clone breaks when a
+# follower moves the clone; the imported key is path-independent.
+# State-changing, so it stays below project-root resolution (see the
+# statelessness contract at the top of this file).
+KEY_FILE="${PROJECT_ROOT}/keys/cinnamon-rocky10-public.asc"
+if [ ! -f "$KEY_FILE" ]; then
+    die "GPG public key not found at ${KEY_FILE}."
+fi
+
+info "Importing repo GPG public key (${KEY_ID}) into the rpm keyring..."
+rpm --import "${KEY_FILE}" || die "rpm --import failed for ${KEY_FILE}."
+
+# Assert the key actually landed in the rpm keyring. rpm names imported
+# keys gpg-pubkey-<keyid>-<import-timestamp>; the timestamp differs per
+# machine, so query by keyid prefix. Re-importing an already-present key
+# is a no-op (verified on the host), so this step is idempotent.
+if ! rpm -q "gpg-pubkey-${KEY_ID}*" >/dev/null 2>&1; then
+    die "Key ${KEY_ID} not found in the rpm keyring after import (expected a gpg-pubkey-${KEY_ID}-<timestamp> package)."
+fi
+info "Key ${KEY_ID} present in the rpm keyring."
+
+# -------------------------------------------------------------------
+# Step 4 — Install the .repo file
 # -------------------------------------------------------------------
 # Build the absolute file:// URL for the rpms/ directory.
 BASEURL="file://${RPMS_DIR}"
@@ -116,12 +151,14 @@ info "Installing ${REPO_FILE} with baseurl=${BASEURL}"
 
 # Write the repo file directly with printf. This avoids sed delimiter collisions
 # when the path contains the sed delimiter character (e.g. |).
+# gpgcheck=1: dnf verifies every package signature against the rpm
+# keyring populated in step 3.
 printf '[%s]\nname=%s\nbaseurl=%s\nenabled=%s\ngpgcheck=%s\nmetadata_expire=%s\nmodule_hotfixes=%s\nkeepcache=%s\n' \
     "cinnamon-rocky10" \
     "Cinnamon for Rocky Linux 10 (local)" \
     "${BASEURL}" \
     "1" \
-    "0" \
+    "1" \
     "0" \
     "0" \
     "0" \
@@ -133,7 +170,7 @@ chmod 644 "$REPO_FILE"
 info "Repository file installed at ${REPO_FILE}."
 
 # -------------------------------------------------------------------
-# Step 4 — Enable CRB repository
+# Step 5 — Enable CRB repository
 # -------------------------------------------------------------------
 info "Enabling CRB (CodeReady Builder) repository..."
 CRB_ERR=$(dnf config-manager --set-enabled crb 2>&1 1>/dev/null) || {
@@ -145,7 +182,7 @@ CRB_ERR=$(dnf config-manager --set-enabled crb 2>&1 1>/dev/null) || {
 }
 
 # -------------------------------------------------------------------
-# Step 5 — Verify the repository is readable
+# Step 6 — Verify the repository is readable
 # -------------------------------------------------------------------
 info "Refreshing repository metadata..."
 if ! dnf makecache --disablerepo='*' --enablerepo="${REPO_NAME}"; then
