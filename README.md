@@ -134,10 +134,11 @@ using opencode on Rocky Linux 10.2.
 
 The top-level `LICENSE` (GPL-2.0) covers this repository's own files
 (specs, patches, scripts, docs) only. It does not cover the component
-checkouts, which are under their upstream licenses. Most components are
-GPL-2.0, and desktop, menus, and settings-daemon are additionally
-LGPL-2.0. cjs is MIT or LGPL-2.0-or-later. xapps is GPL-3.0 and
-LGPL-3.0. See each component's `COPYING` file, plus `COPYING.LIB` or
+checkouts, which are under their upstream licenses. Most components
+are GPL-2.0, and desktop, menus, and nemo are additionally
+LGPL-2.0, while settings-daemon is additionally LGPL-2.1.
+cjs is MIT or LGPL-2.0-or-later. xapps is GPL-3.0 and LGPL-3.0.
+See each component's `COPYING` file, plus `COPYING.LIB` or
 `COPYING.LESSER` where dual-licensed, for the full text.
 
 Every source-built spec installs the component's license file under
