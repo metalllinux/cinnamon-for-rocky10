@@ -69,8 +69,9 @@ version gap is a recorded deviation, not an oversight.
   the exact upstream commit and the build tarball sha256 it was built from.
   A clean-checkout rebuild from a fresh clone reproduces the published set
   (verified 2026-09-19).
-- Every source-built package ships its license file under
-  /usr/share/licenses/.
+- Every source-built spec installs the component's license file under
+  /usr/share/licenses/. The published RPM set predates that addition and
+  does not carry the license files.
 
 ## Test results
 
@@ -131,7 +132,15 @@ using opencode on Rocky Linux 10.2.
 
 ## License
 
-Cinnamon components are under their respective upstream licenses (GPL-2.0,
-LGPL-2.0, MIT). See individual component LICENSE files. Every source-built
-package in this repository ships its license file under
-/usr/share/licenses/.
+The top-level `LICENSE` (GPL-2.0) covers this repository's own files
+(specs, patches, scripts, docs) only. It does not cover the component
+checkouts, which are under their upstream licenses. Most components are
+GPL-2.0, and desktop, menus, and settings-daemon are additionally
+LGPL-2.0. cjs is MIT or LGPL-2.0-or-later. xapps is GPL-3.0 and
+LGPL-3.0. See each component's `COPYING` file, plus `COPYING.LIB` or
+`COPYING.LESSER` where dual-licensed, for the full text.
+
+Every source-built spec installs the component's license file under
+/usr/share/licenses/. The published RPM set was built before that
+addition, so it does not carry the license files. A rebuild from
+spec/ is required to ship them.

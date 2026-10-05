@@ -107,6 +107,7 @@ ninja -C builddir -j2
 DESTDIR=%{buildroot} ninja -C builddir install
 
 %files
+%license COPYING
 %{_bindir}/cinnamon
 %{_bindir}/cinnamon2d
 %{_bindir}/cinnamon-calendar-server

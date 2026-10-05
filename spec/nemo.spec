@@ -3,7 +3,7 @@ Version:        6.7.4
 Release:        2.el10
 Summary:        The default file manager of the Cinnamon desktop
 
-License:        GPLv3+
+License:        GPLv2+ and LGPL2+
 URL:            https://github.com/linuxmint/nemo
 Source0:        %{name}-%{version}.tar.gz
 # Source0 provenance (verified 2026-09-18 by full tree diff against upstream):
@@ -79,6 +79,7 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %postun -p /sbin/ldconfig
 
 %files
+%license COPYING COPYING.LIB
 %{_bindir}/nemo*
 %{_libexecdir}/nemo-extensions-list
 %{_libdir}/libnemo-extension.so.*

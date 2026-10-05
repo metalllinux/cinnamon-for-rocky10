@@ -53,6 +53,7 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %postun -p /sbin/ldconfig
 
 %files
+%license COPYING COPYING.LIB
 %{_libdir}/libcinnamon-menu-3.so.*
 %{_libdir}/girepository-1.0/CMenu-3.0.typelib
 %{_datadir}/gir-1.0/CMenu-3.0.gir

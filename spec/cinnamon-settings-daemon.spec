@@ -75,6 +75,7 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %postun -p /sbin/ldconfig
 
 %files
+%license COPYING COPYING.LIB
 /etc/xdg/autostart/cinnamon-settings-daemon-*.desktop
 %{_libexecdir}/csd-*
 %{_bindir}/csd-*
