@@ -3,7 +3,7 @@ Version:        6.7.4
 Release:        3.el10
 Summary:        GNOME desktop environment fork providing the Cinnamon experience
 
-License:        GPLv2+ and LGPL2+
+License:        GPLv2+
 URL:            https://github.com/linuxmint/cinnamon
 Source0:        %{name}-%{version}.tar.gz
 
