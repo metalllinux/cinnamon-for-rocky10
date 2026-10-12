@@ -47,10 +47,38 @@ two rebuilt ones.
 | python3-xapp | 3.0.2-1.el10 | Settings app dependency (XApp API) |
 | gdk-pixbuf-parsers | 2.42.12-2.el10 | PNG and JPEG image loaders. EL10's `gdk-pixbuf2` ships none, and photo wallpapers render black without them |
 | cinnamon-desktop | 6.7.2-2.el10 | Rebuilt. A patch composites photo wallpapers on the Wayland background window |
-| cinnamon | 6.7.4-3.el10 | Rebuilt. This release bundles the Cinnamon Settings app and declares the Python dependencies as RPM Requires, so the settings panel works out of the box |
+| cinnamon | 6.7.4-3.el10 | Rebuilt. This release bundles the Cinnamon Settings app and declares the Python dependencies as RPM Requires |
 
 The `cinnamon-settings` package from the 14-package era is gone. The
 settings app ships inside the `cinnamon` RPM now.
+
+**Known issue.** The settings app (`cinnamon-settings`, the "Control
+Center") crashes at startup on Rocky 10 with `ValueError: Namespace
+TimezoneMap not available` and exits before any window appears. The
+TimezoneMap GI namespace is missing on Rocky 10. A fix that makes the
+namespace optional is built as `cinnamon-6.7.4-4.el10`. When the
+namespace is absent, the Region/City selector covers timezone selection.
+The fix is verified at the process level (the app starts and stays alive
+with no TimezoneMap error), but it is unsigned and not part of the
+published set, so the published `cinnamon` 6.7.4-3 still crashes.
+
+**Known issue.** Screen brightness cannot be changed from Cinnamon
+Settings or the keyboard shortcuts on the published set. The published
+`cinnamon-settings-daemon` 6.7.2-2 was built with gudev disabled and so
+does not ship `csd-backlight-helper`, the only brightness backend the
+settings daemon's power plugin spawns for every brightness get and set.
+The slider read fails and the shortcut step is a no-op, both verified
+at the D-Bus surface the two controls use. The fix enables the helper
+build (gudev under its Rocky package name `libgudev-devel`, plus
+`upower-devel`, a build dependency that was never declared) and is
+built as unsigned `cinnamon-settings-daemon-6.7.2-3.el10`. It is
+verified at the D-Bus level on the team's test VM, where the helper
+runs and reports the absence of backlight hardware instead of failing
+to spawn, but it is unsigned and not part of the published set, so the
+published 6.7.2-2 still lacks the helper. Even with the fix, brightness
+has no effect on a machine without backlight hardware, which covers
+the team's virtual machines, so end-to-end verification needs a display
+with a real backlight.
 
 `gnome-terminal` is built from source because no EL10 or EPEL repository
 carries it. 3.54.5 is the newest release compatible with EL10's vte291
