@@ -12,8 +12,10 @@ Source0:        %{name}-%{version}.tar.gz
 #   Upstream does not tag release versions; fetchable content ref (top dir
 #   cinnamon-settings-daemon-18bb726dc21a):
 #     https://github.com/linuxmint/cinnamon-settings-daemon/archive/18bb726dc21a.tar.gz
-#   sha256 of this build tarball (git archive, top dir cinnamon-settings-daemon-6.7.2/):
-#     1141da2de844de68ac6ddbd24a9cb48295c0790507e09b46ff24f1048c10cd93
+#   Provenance check: diff -r of the staged Source0 tree against a clean checkout of
+#   18bb726dc21a (what the 6.7.2-3 build verified, TASK-0027). A per-build tarball
+#   sha256 is intentionally not recorded: tar metadata differs between git archive
+#   runs, so such a hash is not reproducible across builds.
 
 Requires:       gtk-layer-shell
 
