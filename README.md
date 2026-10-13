@@ -80,6 +80,31 @@ has no effect on a machine without backlight hardware, which covers
 the team's virtual machines, so end-to-end verification needs a display
 with a real backlight.
 
+**Known issue.** Opening the Power pane of Cinnamon Settings
+("Control Center") prints a D-Bus `Unauthorized (36)` traceback at
+`cs_power.py:883 on_my_value_changed`; the process survives and the
+pane stays usable. The traceback is at pane startup, and the failing
+`Set` writes back the profile the pane just read, so the displayed
+profile is correct and the failure is cosmetic.
+
+The power-profile D-Bus name is answered on Rocky 10 by the base-OS
+`tuned-ppd` service, the PPD-to-TuneD translation daemon;
+`power-profiles-daemon` is not installed. `tuned-ppd` gates profile
+switching behind interactive polkit authentication for the action
+`net.hadess.PowerProfiles.switch-profile`, and the unguarded `Set` in
+the pane's startup self-trigger is rejected in sessions with no
+attached polkit agent, which is where the traceback comes from. It
+reproduces on both test VMs, Rocky 10.2 (Wayland) and the Fedora 45
+reference (X11), with an identical error. Profile switching on a live
+desktop goes through the same gate, so a click prompts for
+authentication and succeeds with the user's password; that
+live-desktop outcome is inferred from the service code, not tested,
+because the team's test VMs cannot drive an interactive dialog. The
+fix belongs upstream in `linuxmint/cinnamon` (guard the `Set` call
+or suppress the startup self-trigger); no fix exists in this
+environment, and the traceback persists on the published set until
+upstream changes.
+
 `gnome-terminal` is built from source because no EL10 or EPEL repository
 carries it. 3.54.5 is the newest release compatible with EL10's vte291
 0.78.6. The Fedora reference runs 3.60.0, which needs vte 0.79.90, so the
