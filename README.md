@@ -47,10 +47,63 @@ two rebuilt ones.
 | python3-xapp | 3.0.2-1.el10 | Settings app dependency (XApp API) |
 | gdk-pixbuf-parsers | 2.42.12-2.el10 | PNG and JPEG image loaders. EL10's `gdk-pixbuf2` ships none, and photo wallpapers render black without them |
 | cinnamon-desktop | 6.7.2-2.el10 | Rebuilt. A patch composites photo wallpapers on the Wayland background window |
-| cinnamon | 6.7.4-3.el10 | Rebuilt. This release bundles the Cinnamon Settings app and declares the Python dependencies as RPM Requires, so the settings panel works out of the box |
+| cinnamon | 6.7.4-3.el10 | Rebuilt. This release bundles the Cinnamon Settings app and declares the Python dependencies as RPM Requires |
 
 The `cinnamon-settings` package from the 14-package era is gone. The
 settings app ships inside the `cinnamon` RPM now.
+
+**Known issue.** The settings app (`cinnamon-settings`, the "Control
+Center") crashes at startup on Rocky 10 with `ValueError: Namespace
+TimezoneMap not available` and exits before any window appears. The
+TimezoneMap GI namespace is missing on Rocky 10. A fix that makes the
+namespace optional is built as `cinnamon-6.7.4-4.el10`. When the
+namespace is absent, the Region/City selector covers timezone selection.
+The fix is verified at the process level (the app starts and stays alive
+with no TimezoneMap error), but it is unsigned and not part of the
+published set, so the published `cinnamon` 6.7.4-3 still crashes.
+
+**Known issue.** Screen brightness cannot be changed from Cinnamon
+Settings or the keyboard shortcuts on the published set. The published
+`cinnamon-settings-daemon` 6.7.2-2 was built with gudev disabled and so
+does not ship `csd-backlight-helper`, the only brightness backend the
+settings daemon's power plugin spawns for every brightness get and set.
+The slider read fails and the shortcut step is a no-op, both verified
+at the D-Bus surface the two controls use. The fix enables the helper
+build (gudev under its Rocky package name `libgudev-devel`, plus
+`upower-devel`, a build dependency that was never declared) and is
+built as unsigned `cinnamon-settings-daemon-6.7.2-3.el10`. It is
+verified at the D-Bus level on the team's test VM, where the helper
+runs and reports the absence of backlight hardware instead of failing
+to spawn, but it is unsigned and not part of the published set, so the
+published 6.7.2-2 still lacks the helper. Even with the fix, brightness
+has no effect on a machine without backlight hardware, which covers
+the team's virtual machines, so end-to-end verification needs a display
+with a real backlight.
+
+**Known issue.** Opening the Power pane of Cinnamon Settings
+("Control Center") prints a D-Bus `Unauthorized (36)` traceback at
+`cs_power.py:883 on_my_value_changed`; the process survives and the
+pane stays usable. The traceback is at pane startup, and the failing
+`Set` writes back the profile the pane just read, so the displayed
+profile is correct and the failure is cosmetic.
+
+The power-profile D-Bus name is answered on Rocky 10 by the base-OS
+`tuned-ppd` service, the PPD-to-TuneD translation daemon;
+`power-profiles-daemon` is not installed. `tuned-ppd` gates profile
+switching behind interactive polkit authentication for the action
+`net.hadess.PowerProfiles.switch-profile`, and the unguarded `Set` in
+the pane's startup self-trigger is rejected in sessions with no
+attached polkit agent, which is where the traceback comes from. It
+reproduces on both test VMs, Rocky 10.2 (Wayland) and the Fedora 45
+reference (X11), with an identical error. Profile switching on a live
+desktop goes through the same gate, so a click prompts for
+authentication and succeeds with the user's password; that
+live-desktop outcome is inferred from the service code, not tested,
+because the team's test VMs cannot drive an interactive dialog. The
+fix belongs upstream in `linuxmint/cinnamon` (guard the `Set` call
+or suppress the startup self-trigger); no fix exists in this
+environment, and the traceback persists on the published set until
+upstream changes.
 
 `gnome-terminal` is built from source because no EL10 or EPEL repository
 carries it. 3.54.5 is the newest release compatible with EL10's vte291
@@ -69,8 +122,9 @@ version gap is a recorded deviation, not an oversight.
   the exact upstream commit and the build tarball sha256 it was built from.
   A clean-checkout rebuild from a fresh clone reproduces the published set
   (verified 2026-09-19).
-- Every source-built package ships its license file under
-  /usr/share/licenses/.
+- Every source-built spec installs the component's license file under
+  /usr/share/licenses/. The published RPM set predates that addition and
+  does not carry the license files.
 
 ## Test results
 
@@ -131,7 +185,16 @@ using opencode on Rocky Linux 10.2.
 
 ## License
 
-Cinnamon components are under their respective upstream licenses (GPL-2.0,
-LGPL-2.0, MIT). See individual component LICENSE files. Every source-built
-package in this repository ships its license file under
-/usr/share/licenses/.
+The top-level `LICENSE` (GPL-2.0) covers this repository's own files
+(specs, patches, scripts, docs) only. It does not cover the component
+checkouts, which are under their upstream licenses. Most components
+are GPL-2.0, and desktop, menus, and nemo are additionally
+LGPL-2.0, while settings-daemon is additionally LGPL-2.1.
+cjs is MIT or LGPL-2.0-or-later. xapps is GPL-3.0 and LGPL-3.0.
+See each component's `COPYING` file, plus `COPYING.LIB` or
+`COPYING.LESSER` where dual-licensed, for the full text.
+
+Every source-built spec installs the component's license file under
+/usr/share/licenses/. The published RPM set was built before that
+addition, so it does not carry the license files. A rebuild from
+spec/ is required to ship them.

@@ -65,6 +65,7 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %postun -p /sbin/ldconfig
 
 %files
+%license COPYING COPYING.LIB
 %{_libdir}/libcinnamon-desktop.so.4*
 %{_libdir}/libcvc.so.0*
 %{_datadir}/locale

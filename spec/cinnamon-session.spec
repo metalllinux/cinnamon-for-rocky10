@@ -58,6 +58,7 @@ DESTDIR=%{buildroot} ninja -C builddir install
 : %find_lang %{name} || :
 
 %files
+%license COPYING
 %{_bindir}/cinnamon-session
 %{_bindir}/cinnamon-session-quit
 %{_libexecdir}/cinnamon-session-binary

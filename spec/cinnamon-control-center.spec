@@ -77,6 +77,7 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %postun -p /sbin/ldconfig
 
 %files
+%license COPYING
 %{_bindir}/cinnamon-control-center
 %{_libdir}/libcinnamon-control-center.so.*
 %{_libdir}/cinnamon-control-center-1/panels/*.so

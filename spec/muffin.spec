@@ -134,6 +134,7 @@ DESTDIR=%{buildroot} ninja -C redhat-linux-build install
 %postun -p /sbin/ldconfig
 
 %files -f %{name}.lang
+%license COPYING
 %{_bindir}/muffin
 %{_bindir}/cinnamon-list-windows
 %{_libdir}/libmuffin.so.*

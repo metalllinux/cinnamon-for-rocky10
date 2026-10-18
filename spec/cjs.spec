@@ -57,6 +57,7 @@ DESTDIR=%{buildroot} ninja -C redhat-linux-build install -v
 %postun -p /sbin/ldconfig
 
 %files
+%license COPYING
 %{_bindir}/cjs-console
 %{_bindir}/cjs
 %{_libdir}/libcjs.so.*

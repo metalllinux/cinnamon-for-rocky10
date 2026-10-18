@@ -70,6 +70,7 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %postun -p /sbin/ldconfig
 
 %files -n %{name}-lib
+%license COPYING COPYING.LESSER
 %{_libdir}/libxapp.so.*
 %{_libdir}/girepository-1.0/XApp-1.0.typelib
 %{_datadir}/gir-1.0/XApp-1.0.gir

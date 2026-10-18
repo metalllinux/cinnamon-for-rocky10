@@ -1,9 +1,9 @@
 Name:           cinnamon
 Version:        6.7.4
-Release:        3.el10
+Release:        4.el10
 Summary:        GNOME desktop environment fork providing the Cinnamon experience
 
-License:        GPLv2+ and LGPL2+
+License:        GPLv2+
 URL:            https://github.com/linuxmint/cinnamon
 Source0:        %{name}-%{version}.tar.gz
 
@@ -107,6 +107,7 @@ ninja -C builddir -j2
 DESTDIR=%{buildroot} ninja -C builddir install
 
 %files
+%license COPYING
 %{_bindir}/cinnamon
 %{_bindir}/cinnamon2d
 %{_bindir}/cinnamon-calendar-server
@@ -163,6 +164,15 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %{python3_sitelib}/cinnamon/
 
 %changelog
+* Tue Oct 06 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-4.el10
+- Make the TimezoneMap GI namespace optional in cs_calendar.py. Rocky 10
+  has no gir1.2-timezonemap package (Linux Mint import), so the hard
+  gi.require_version('TimezoneMap', '1.0') at module import crashed
+  cinnamon-settings (System Settings) at startup with
+  "ValueError: Namespace TimezoneMap not available" (TASK-0021 root
+  cause). With the namespace absent, the map widget is skipped and the
+  Region/City selector covers timezone selection; behavior is unchanged
+  when the namespace is present (TASK-0026).
 * Thu Sep 17 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-3.el10
 - Also require python3-xapp: cinnamon-settings imports xapp at
   bin/SettingsWidgets.py:10 and xapp.os at cinnamon-settings.py:33

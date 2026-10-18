@@ -1,6 +1,6 @@
 Name:           cinnamon-settings-daemon
 Version:        6.7.2
-Release:        2.el10
+Release:        3.el10
 Summary:        Daemon handling Cinnamon settings
 
 License:        GPLv2+
@@ -12,8 +12,10 @@ Source0:        %{name}-%{version}.tar.gz
 #   Upstream does not tag release versions; fetchable content ref (top dir
 #   cinnamon-settings-daemon-18bb726dc21a):
 #     https://github.com/linuxmint/cinnamon-settings-daemon/archive/18bb726dc21a.tar.gz
-#   sha256 of this build tarball (git archive, top dir cinnamon-settings-daemon-6.7.2/):
-#     1141da2de844de68ac6ddbd24a9cb48295c0790507e09b46ff24f1048c10cd93
+#   Provenance check: diff -r of the staged Source0 tree against a clean checkout of
+#   18bb726dc21a (what the 6.7.2-3 build verified, TASK-0027). A per-build tarball
+#   sha256 is intentionally not recorded: tar metadata differs between git archive
+#   runs, so such a hash is not reproducible across builds.
 
 Requires:       gtk-layer-shell
 
@@ -27,14 +29,18 @@ BuildRequires:  libcanberra-devel
 BuildRequires:  cinnamon-desktop-devel >= 4.8.0
 BuildRequires:  fontconfig-devel
 BuildRequires:  libnotify-devel >= 0.7.3
-# BuildRequires:  upower-glib-devel >= 0.99.11  # not available
+# Provides the upower-glib pkg-config file and headers that csd-power links against.
+BuildRequires:  upower-devel
 BuildRequires:  libwacom-devel >= 0.7
 BuildRequires:  colord-devel
 BuildRequires:  cups-devel
 BuildRequires:  nss-devel
 # BuildRequires:  polkit-gobject-devel >= 0.97  # not available, feature disabled
 BuildRequires:  systemd-devel
-# BuildRequires:  gudev-devel  # not available, feature disabled
+# gudev: RHEL package name is libgudev-devel (Fedora calls it gudev-devel).
+# csd-power spawns csd-backlight-helper for every brightness get/set, so the
+# helper must be built: it is the only brightness backend (TASK-0027).
+BuildRequires:  libgudev-devel
 BuildRequires:  libX11-devel
 BuildRequires:  libXext-devel
 BuildRequires:  libXi-devel
@@ -60,7 +66,6 @@ meson setup builddir \
     -Duse_color=disabled \
     -Duse_cups=disabled \
     -Duse_smartcard=disabled \
-    -Duse_gudev=disabled \
     -Duse_wacom=disabled \
     -Duse_polkit=disabled \
     -Duse_logind=disabled \
@@ -75,6 +80,7 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %postun -p /sbin/ldconfig
 
 %files
+%license COPYING COPYING.LIB
 /etc/xdg/autostart/cinnamon-settings-daemon-*.desktop
 %{_libexecdir}/csd-*
 %{_bindir}/csd-*
@@ -87,6 +93,16 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %{_datadir}/polkit-1/actions/org.cinnamon.settings*.policy
 
 %changelog
+* Mon Oct 12 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-3
+- Build and ship csd-backlight-helper: enable gudev (libgudev-devel on
+  Rocky, the RHEL name of the gudev-1.0 pkg-config the Fedora spec line
+  assumed as gudev-devel) so the backlight helper the csd-power plugin
+  spawns for every brightness get/set is installed. Without it
+  GetPercentage fails ENOENT and the brightness shortcuts are a no-op
+  (TASK-0027 P1).
+- Declare upower-devel, which provides the upower-glib pkg-config file
+  csd-power links against (was undeclared).
+
 * Wed Sep 16 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-2
 - Enable the gtk-layer-shell Wayland backend for the csd-background plugin
   (-Dgtk_layer_shell=true) so the desktop wallpaper renders natively on
