@@ -18,8 +18,11 @@ cf278359a2e75348452f217c6db7bd4b4b0b09eb1634014959e1dcbb8d7b7a69  cinnamon-sessi
 487b23dfaba684611504e3f70d1c39ce2f22c9feff480682777768c9243549ff  cinnamon-session-debuginfo-6.7.3-1.el10.x86_64.rpm
 a42b32070bf661412364b30f3d6ae25d67e6204a9013b59f11aae215983be935  cinnamon-session-debugsource-6.7.3-1.el10.x86_64.rpm
 3b26c26d94bb394f6d3609a7987345a976213cae3e71467a801b58b1b08441ad  cinnamon-settings-daemon-6.7.2-2.el10.x86_64.rpm
+b1b39b006c79986265f2768056a2c9cd3651ba4da389641d3bf0ddbfdd9ab6f7  cinnamon-settings-daemon-6.7.2-3.el10.x86_64.rpm
 759b8d2a8bf26f06188070e59e197a7d79af0320cbd8308f830e79b673dcbfad  cinnamon-settings-daemon-debuginfo-6.7.2-2.el10.x86_64.rpm
+8d0a3cf128b2fef16a4f3a36eccaa30d80b039b943fb4505ea8b7546a7f475ed  cinnamon-settings-daemon-debuginfo-6.7.2-3.el10.x86_64.rpm
 06558ae9ccc866d7517fc8aa5f8774f45f97b37c17e0f7c73b6bd6430d5f987c  cinnamon-settings-daemon-debugsource-6.7.2-2.el10.x86_64.rpm
+6f283271a15fa4309cd6ca6033d51c80dc312a49511b05cdfad451dc1f128a20  cinnamon-settings-daemon-debugsource-6.7.2-3.el10.x86_64.rpm
 058caa626177b4e66aef742ca76d1a2ce4d0a75046045b370ebcf544037f51d9  cjs-6.4.0-1.el10.x86_64.rpm
 b65a75ed904463e79494caec00f4f0cbc8bc57e654db0728efa3ac9bd2f0d4f6  cjs-debuginfo-6.4.0-1.el10.x86_64.rpm
 36ed1b9befafbd2a1feb5b18d4685fb08115a79f3abc7b7c57f6ffb9b59fc385  cjs-debugsource-6.4.0-1.el10.x86_64.rpm
