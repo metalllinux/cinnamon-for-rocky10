@@ -63,7 +63,7 @@ esac
 # Fingerprint of the dedicated signing key (public data; it ships inside the
 # public key). Recorded from item 1 (2026-09-21). The check below refuses to
 # run against any other keyring.
-EXPECTED_FINGERPRINT="1689676AF4D4F6FEC142B4429C0A8912FDA02785"
+EXPECTED_FINGERPRINT="2274BFE1BF28C051CD98675BEBD13108EB7FEF99"
 
 # Dedicated keyring (host-local, mode 700) and sibling passphrase location
 # (D1). Overridable for testing via the environment; the production run uses
