@@ -6,6 +6,7 @@ Summary:        GNOME desktop environment fork providing the Cinnamon experience
 License:        GPLv2+
 URL:            https://github.com/linuxmint/cinnamon
 Source0:        %{name}-%{version}.tar.gz
+Patch0:         xdo-optional-gcr-4.patch
 
 BuildRequires:  meson >= 0.64.0
 BuildRequires:  ninja-build
@@ -41,14 +42,21 @@ BuildRequires:  gtk4-devel
 BuildRequires:  gettext
 
 # Runtime dependencies of the Python settings app (cinnamon-settings.py),
-# which ships in this package. The app imports all four unguarded; Fedora
-# carries the same four Requires on the cinnamon package (verified on the
-# Fedora 44 reference).
+# which ships in this package. The app imports all six unguarded; the
+# first four match the Requires of the Fedora cinnamon package (verified
+# on the Fedora 44 reference).
 Requires:       python3-setproctitle
 Requires:       python3-pillow
 Requires:       python3-tinycss2
 # cinnamon-settings also imports xapp (bin/SettingsWidgets.py:10, xapp.os:33)
 Requires:       python3-xapp
+# The settings app imports requests and pexpect at module level,
+# unguarded: harvester.py:16 (reached via cs_actions.py:7) and
+# cs_user.py:10 (TASK-0038). Both are in EL10 baseos
+# (python3-requests-2.32.4-1.el10_0, python3-pexpect-4.9.0-6.el10), so
+# these Requires resolve without a new repository.
+Requires:       python3-requests
+Requires:       python3-pexpect
 
 %description
 Cinnamon is a desktop environment which provides advanced innovative
@@ -59,35 +67,18 @@ Mutter and CJS instead of GJS for the JavaScript runtime.
 %prep
 %setup -q
 
-# Patch: make libxdo optional
-sed -i 's/xdo = cc.find_library(.xdo.)/xdo = cc.find_library("xdo", required: false)/' meson.build
+# Rocky 10 port adaptation: make libxdo optional (libxdo is not in the
+# EL10 repositories) and adapt to the gcr-4 API (EL10 ships gcr 4.x, not
+# 3.x). The patch is the complete adaptation the build needs, generated
+# from the verified build state of the component checkout (the state the
+# 6.7.4-4 build was made from, 2026-10-06, build host shadow); applying
+# it to the pristine source reproduces that state byte for byte (all
+# eight changed files cmp-identical, verified 2026-10-30).
+%patch0 -p1
 
-# Patch: update gcr include paths for gcr-4
-sed -i 's|#include <gcr/gcr-base.h>|#include <gcr/gcr.h>|' src/cinnamon-keyring-prompt.c src/cinnamon-secure-text-buffer.c
-
-# Patch: update GcrPromptIface to GcrPromptInterface for gcr-4 compatibility
-sed -i 's/GcrPromptIface/GcrPromptInterface/g' src/cinnamon-keyring-prompt.c
-
-# Patch: fix G_DEFINE_TYPE_WITH_CODE syntax
-sed -i 's/G_IMPLEMENT_INTERFACE (GCR_TYPE_PROMPT, cinnamon_keyring_prompt_iface);/G_IMPLEMENT_INTERFACE (GCR_TYPE_PROMPT, cinnamon_keyring_prompt_iface))/' src/cinnamon-keyring-prompt.c
-
-# Patch: update GIR include from Gcr-3 to Gcr-4
-sed -i "s/'Gcr-3'/'Gcr-4'/" src/meson.build
-
-# Patch: add HAVE_XDO to config.h
-sed -i '/if xdo.found()/i\if xdo.found()\n    cinnamon_conf.set10('\''HAVE_XDO'\'', true)\nendif\n' meson.build || true
-
-# Patch: wrap xdo includes with HAVE_XDO guards
-sed -i 's|#include <xdo.h>|#ifdef HAVE_XDO\n#include <xdo.h>\n#endif|' src/cinnamon-global-private.h
-sed -i 's|#include <xdo.h>|#ifdef HAVE_XDO\n#include <xdo.h>\n#endif|' src/screensaver/backup-locker/event-grabber.c
-
-# Patch: make xdo optional in backup-locker
-sed -i 's|dependencies: \[config_h, X11, xcomposite, xext, gtk, glib, gdkx11, xdo\]|dependencies: [config_h, X11, xcomposite, xext, gtk, glib, gdkx11] + (xdo.found() ? [xdo] : [])|' src/screensaver/backup-locker/meson.build
-
-# Patch: make xdo optional in main deps
-sed -i '/^    xdo,$/d' src/meson.build
-
-# Patch: lower cjs version requirement (upstream 6.4.0 vs Fedora 115.0)
+# Lower the cjs version requirement (upstream 6.4.0 vs Fedora 115.0).
+# Not in the patch: the line is unchanged in the checkout, so it is fixed
+# here, as the build always needed it.
 sed -i "s/version: '>= 115.0'/version: '>= 6.4.0'/" meson.build
 
 # Note: keeping version_compare('>= 139.9') as-is to avoid USE_GIR20 which
@@ -173,6 +164,9 @@ DESTDIR=%{buildroot} ninja -C builddir install
   cause). With the namespace absent, the map widget is skipped and the
   Region/City selector covers timezone selection; behavior is unchanged
   when the namespace is present (TASK-0026).
+- Require python3-requests and python3-pexpect: the settings app imports
+  both at module level (harvester.py:16, cs_user.py:10), unguarded
+  (TASK-0038).
 * Thu Sep 17 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-3.el10
 - Also require python3-xapp: cinnamon-settings imports xapp at
   bin/SettingsWidgets.py:10 and xapp.os at cinnamon-settings.py:33

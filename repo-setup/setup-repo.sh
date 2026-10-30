@@ -35,11 +35,12 @@ set -euo pipefail
 REPO_NAME="cinnamon-rocky10"
 REPO_FILE="/etc/yum.repos.d/${REPO_NAME}.repo"
 # Short GPG key id, lowercase as rpm names it: last 8 hex of fingerprint
-# 1689676AF4D4F6FEC142B4429C0A8912FDA02785. rpm 4.19 names imported key
-# packages gpg-pubkey-<keyid>-<import-timestamp>; the 8-hex width is
-# verified on the host (package gpg-pubkey-fda02785-6ab101f4, TASK-0024
-# item 1). Public data; the key ships at keys/cinnamon-rocky10-public.asc.
-KEY_ID="fda02785"
+# 2274BFE1BF28C051CD98675BEBD13108EB7FEF99. rpm 4.19 names imported key
+# packages gpg-pubkey-<keyid>-<import-timestamp>; verified on the host as
+# gpg-pubkey-eb7fef99-6ad5798e (the old key read
+# gpg-pubkey-fda02785-6ab101f4, TASK-0024 item 1). Public data; the key
+# ships at keys/cinnamon-rocky10-public.asc.
+KEY_ID="eb7fef99"
 
 # -------------------------------------------------------------------
 # Helpers

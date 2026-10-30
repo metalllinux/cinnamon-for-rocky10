@@ -45,14 +45,21 @@ dependencies and future updates.
    sudo ./repo-setup/setup-repo.sh /path/to/cinnamon-for-rocky10
    ```
 
-3. Install the complete set in one command. The 22 names below are exactly
-   the runtime set in `vm-test/install-set.txt`.
+3. Enable EPEL, then install the complete set in one command. The 22
+   names below are exactly the runtime set in
+   `vm-test/install-set.txt`; `gnome-icon-theme` comes from the EPEL
+   repository, which this step enables.
+
+   ```
+   sudo dnf install -y epel-release
+   ```
 
    ```
    sudo dnf install -y \
      cinnamon cinnamon-control-center cinnamon-desktop cinnamon-menus \
      cinnamon-rocky-defaults cinnamon-session cinnamon-settings-daemon \
-     cjs gdk-pixbuf-parsers gnome-terminal gtk-layer-shell mozjs115 \
+     cjs gdk-pixbuf-parsers gnome-icon-theme gnome-terminal \
+     gtk-layer-shell mozjs115 \
      muffin muffin-clutter muffin-cogl nemo \
      python3-pillow python3-setproctitle python3-tinycss2 \
      python3-webencodings python3-xapp xapps-lib
@@ -112,13 +119,20 @@ the command line.
    The success marker is `=== Repository setup complete ===` with exit
    code 0.
 
-3. Install the complete set, the 22 names from Quick start step 3.
+3. Enable EPEL, then install the complete set, the names from Quick
+   start step 3, which includes `gnome-icon-theme` from the EPEL
+   repository.
+
+   ```
+   sudo dnf install -y epel-release
+   ```
 
    ```
    sudo dnf install -y \
      cinnamon cinnamon-control-center cinnamon-desktop cinnamon-menus \
      cinnamon-rocky-defaults cinnamon-session cinnamon-settings-daemon \
-     cjs gdk-pixbuf-parsers gnome-terminal gtk-layer-shell mozjs115 \
+     cjs gdk-pixbuf-parsers gnome-icon-theme gnome-terminal \
+     gtk-layer-shell mozjs115 \
      muffin muffin-clutter muffin-cogl nemo \
      python3-pillow python3-setproctitle python3-tinycss2 \
      python3-webencodings python3-xapp xapps-lib
@@ -185,32 +199,36 @@ sudo createrepo_c /path/to/cinnamon-for-rocky10/rpms/
 sudo rpm --import keys/cinnamon-rocky10-public.asc
 ```
 The key is at `keys/cinnamon-rocky10-public.asc` (fingerprint
-`1689676AF4D4F6FEC142B4429C0A8912FDA02785`). dnf verifies package
-signatures against the rpm keyring, so this import is what makes the
-`gpgcheck=1` line in step 4 mean anything. Importing a key that is
-already present is a no-op, so a re-run is safe.
+`2274BFE1BF28C051CD98675BEBD13108EB7FEF99`). The import fills the rpm
+keyring, which the "Verifying the release" checks use for
+`rpm --checksig`. dnf reads the key from the `gpgkey=` line in step 4,
+not from the keyring. Importing a key that is already present is a no-op,
+so a re-run is safe.
 
 4. Create `/etc/yum.repos.d/cinnamon-rocky10.repo` with the following
-   content, replacing the baseurl with the absolute path to your rpms/
-   directory.
+   content, replacing the clone path in `baseurl=` and `gpgkey=` with the
+   absolute path of your clone.
 ```
 [cinnamon-rocky10]
 name=Cinnamon for Rocky Linux 10 (local)
-baseurl=file:///path/to/cinnamon-for-rocky10/rpms/
+baseurl=file:/home/howard/cinnamon-for-rocky10/rpms/
 enabled=1
 gpgcheck=1
+gpgkey=file:/home/howard/cinnamon-for-rocky10/keys/cinnamon-rocky10-public.asc
 metadata_expire=0
 module_hotfixes=0
 keepcache=0
 ```
-The `gpgcheck=1` line turns on signature verification. dnf checks each
-package's signature against the key from step 3 and refuses any package
-that does not verify. There is no `gpgkey=` line because the key already
-lives in the rpm keyring.
+The `gpgcheck=1` line turns on signature verification. dnf reads the key
+from the `gpgkey=` line and imports it automatically on the first
+repository check, then refuses any package that does not verify. The
+`gpgkey=` path points into your clone just like `baseurl=`, so if you move
+the clone, update both lines.
 
-5. Enable CRB.
+5. Enable CRB and EPEL.
 ```
 sudo dnf config-manager --set-enabled crb
+sudo dnf install -y epel-release
 ```
 
 6. Install the complete set with the single command from Quick start step
@@ -237,12 +255,16 @@ or a newer local build.
 
 The released set is pinned to a git tag and carries two independent
 checks, one for each failure mode that a plain install would not catch.
-The first signed release is `v1.0.0`, and every future republish gets a
-new tag, because the set is only ever published forward at a new tag.
-Clone at the tag so both checks run against exactly what the tag pins.
+The first signed release, `v1.0.0`, pins the original 64-RPM set and
+is signed with the original key (fingerprint
+`1689676AF4D4F6FEC142B4429C0A8912FDA02785`). Every republish after it
+gets a new tag, because the set is only ever published forward at a new
+tag. The current release, `v1.0.1`, is signed with the tracked key
+(fingerprint `2274BFE1BF28C051CD98675BEBD13108EB7FEF99`). Clone at the
+tag so both checks run against exactly what the tag pins.
 
 ```
-git clone --depth 1 --branch v1.0.0 https://github.com/metalllinux/cinnamon-for-rocky10
+git clone --depth 1 --branch v1.0.1 https://github.com/metalllinux/cinnamon-for-rocky10
 cd cinnamon-for-rocky10
 ```
 
@@ -280,7 +302,7 @@ for f in rpms/*.rpm; do rpm --checksig "$f"; done
 
 Every RPM must report `digests signatures OK`. The public key is
 `keys/cinnamon-rocky10-public.asc`, fingerprint
-`1689676AF4D4F6FEC142B4429C0A8912FDA02785`. Before trusting the key,
+`2274BFE1BF28C051CD98675BEBD13108EB7FEF99`. Before trusting the key,
 compare this fingerprint against the value published out-of-band on
 metalinux.dev. The key file served by the repository is not an independent
 source of trust.
@@ -306,19 +328,20 @@ and the manual path enables it in step 5.
 ## Installed packages
 
 The 22 runtime packages in `vm-test/install-set.txt`, with the versions
-published in `rpms/`.
+published in `rpms/`, plus `gnome-icon-theme` from the EPEL repository.
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| cinnamon | 6.7.4-3.el10 | Desktop shell. Bundles the Cinnamon Settings app and the cinnamon-wayland session |
+| cinnamon | 6.7.4-4.el10 | Desktop shell. Bundles the Cinnamon Settings app and the cinnamon-wayland session |
 | cinnamon-control-center | 6.7.2-1.el10 | System Settings app (32 panels) |
 | cinnamon-desktop | 6.7.2-2.el10 | Desktop library. The 2.el10 rebuild composites photo wallpapers on Wayland |
 | cinnamon-menus | 6.7.0-1.el10 | Menu configuration |
 | cinnamon-rocky-defaults | 1.0-2.el10 | Rocky branding. Sets the Gemstone Skies wallpaper and the Rocky logo on the menu button |
 | cinnamon-session | 6.7.3-1.el10 | Session manager |
-| cinnamon-settings-daemon | 6.7.2-2.el10 | Settings daemon |
+| cinnamon-settings-daemon | 6.7.2-3.el10 | Settings daemon |
 | cjs | 6.4.0-1.el10 | Cinnamon JavaScript environment |
 | gdk-pixbuf-parsers | 2.42.12-2.el10 | PNG and JPEG image loaders. EL10's gdk-pixbuf2 ships none, and photo wallpapers render black without them |
+| gnome-icon-theme | 3.12.0-25.el10_1 | Icon theme. Provides the gnome icon theme and the preferences-desktop icons the settings app uses |
 | gnome-terminal | 3.54.5-1.el10 | Terminal. Newest release compatible with EL10's vte291 0.78.6 |
 | gtk-layer-shell | 0.10.1-1.el10 | Wayland layer-shell library for the desktop background |
 | mozjs115 | 115.29.0-1.el10 | SpiderMonkey JavaScript engine runtime |

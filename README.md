@@ -52,33 +52,24 @@ two rebuilt ones.
 The `cinnamon-settings` package from the 14-package era is gone. The
 settings app ships inside the `cinnamon` RPM now.
 
-**Known issue.** The settings app (`cinnamon-settings`, the "Control
-Center") crashes at startup on Rocky 10 with `ValueError: Namespace
-TimezoneMap not available` and exits before any window appears. The
-TimezoneMap GI namespace is missing on Rocky 10. A fix that makes the
-namespace optional is built as `cinnamon-6.7.4-4.el10`. When the
-namespace is absent, the Region/City selector covers timezone selection.
-The fix is verified at the process level (the app starts and stays alive
-with no TimezoneMap error), but it is unsigned and not part of the
-published set, so the published `cinnamon` 6.7.4-3 still crashes.
+**Known issue (fixed in the published set).** The TimezoneMap GI
+namespace is missing on Rocky 10, and the pre-6.7.4-4 settings app
+("Control Center") crashed at startup with `ValueError: Namespace
+TimezoneMap not available` before any window appeared. The published
+`cinnamon` 6.7.4-4 makes the namespace optional (TASK-0038), so the app
+starts and stays alive with no TimezoneMap error, verified at the
+process level. When the namespace is absent, the Region/City selector
+covers timezone selection.
 
-**Known issue.** Screen brightness cannot be changed from Cinnamon
-Settings or the keyboard shortcuts on the published set. The published
-`cinnamon-settings-daemon` 6.7.2-2 was built with gudev disabled and so
-does not ship `csd-backlight-helper`, the only brightness backend the
-settings daemon's power plugin spawns for every brightness get and set.
-The slider read fails and the shortcut step is a no-op, both verified
-at the D-Bus surface the two controls use. The fix enables the helper
-build (gudev under its Rocky package name `libgudev-devel`, plus
-`upower-devel`, a build dependency that was never declared) and is
-built as unsigned `cinnamon-settings-daemon-6.7.2-3.el10`. It is
-verified at the D-Bus level on the team's test VM, where the helper
-runs and reports the absence of backlight hardware instead of failing
-to spawn, but it is unsigned and not part of the published set, so the
-published 6.7.2-2 still lacks the helper. Even with the fix, brightness
-has no effect on a machine without backlight hardware, which covers
-the team's virtual machines, so end-to-end verification needs a display
-with a real backlight.
+**Known issue.** Screen brightness has no end-to-end effect on the
+team's machines. The published `cinnamon-settings-daemon` 6.7.2-3 ships
+`csd-backlight-helper`, the only brightness backend the settings
+daemon's power plugin spawns for every brightness get and set, and the
+helper runs and reports the absence of backlight hardware instead of
+failing to spawn, verified at the D-Bus level on the team's test VM.
+Brightness changes need a display with a real backlight, which the
+team's virtual machines do not have, so the end-to-end path on real
+backlight hardware is unverified.
 
 **Known issue.** Opening the Power pane of Cinnamon Settings
 ("Control Center") prints a D-Bus `Unauthorized (36)` traceback at
@@ -153,7 +144,7 @@ The 64 published RPMs are signed with a dedicated GPG key, and the
 repository is configured with `gpgcheck=1`, so dnf verifies the signature of
 every package it installs. The public key ships in the repository at
 `keys/cinnamon-rocky10-public.asc` (fingerprint
-`1689676AF4D4F6FEC142B4429C0A8912FDA02785`), and
+`2274BFE1BF28C051CD98675BEBD13108EB7FEF99`), and
 `repo-setup/setup-repo.sh` imports it into the rpm keyring as part of
 repository setup. Each release is pinned to a git tag, and the sha256
 manifest at `rpms/SHA256SUMS` records the signed set. The "Verifying the
