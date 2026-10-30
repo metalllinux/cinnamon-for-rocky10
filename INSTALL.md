@@ -200,30 +200,30 @@ sudo rpm --import keys/cinnamon-rocky10-public.asc
 ```
 The key is at `keys/cinnamon-rocky10-public.asc` (fingerprint
 `2274BFE1BF28C051CD98675BEBD13108EB7FEF99`). The import fills the rpm
-keyring, which the "Verifying the release" checks use for
-`rpm --checksig`. dnf reads the key from the `gpgkey=` line in step 4,
-not from the keyring. Importing a key that is already present is a no-op,
-so a re-run is safe.
+keyring, which dnf uses for the `gpgcheck=1` verification in step 4 and
+which the "Verifying the release" checks use for `rpm --checksig`.
+Importing a key that is already present is a no-op, so a re-run is safe.
 
 4. Create `/etc/yum.repos.d/cinnamon-rocky10.repo` with the following
-   content, replacing the clone path in `baseurl=` and `gpgkey=` with the
-   absolute path of your clone.
+   content, replacing the clone path in `baseurl=` with the absolute path
+   of your clone. The block is the same file the setup script writes,
+   with no `gpgkey=` line.
 ```
 [cinnamon-rocky10]
 name=Cinnamon for Rocky Linux 10 (local)
-baseurl=file:/home/howard/cinnamon-for-rocky10/rpms/
+baseurl=file:///home/howard/cinnamon-for-rocky10/rpms
 enabled=1
 gpgcheck=1
-gpgkey=file:/home/howard/cinnamon-for-rocky10/keys/cinnamon-rocky10-public.asc
 metadata_expire=0
 module_hotfixes=0
 keepcache=0
 ```
-The `gpgcheck=1` line turns on signature verification. dnf reads the key
-from the `gpgkey=` line and imports it automatically on the first
-repository check, then refuses any package that does not verify. The
-`gpgkey=` path points into your clone just like `baseurl=`, so if you move
-the clone, update both lines.
+The `gpgcheck=1` line turns on signature verification. dnf verifies every
+package signature against the rpm keyring step 3 populated, and refuses
+any package that does not verify. The setup script path is the
+live-verified one, and this block is the same shape as what it writes for
+the same clone path, so the manual steps produce the same repo file. If
+you move the clone, update the `baseurl=` line.
 
 5. Enable CRB and EPEL.
 ```
@@ -336,7 +336,7 @@ published in `rpms/`, plus `gnome-icon-theme` from the EPEL repository.
 | cinnamon-control-center | 6.7.2-1.el10 | System Settings app (32 panels) |
 | cinnamon-desktop | 6.7.2-2.el10 | Desktop library. The 2.el10 rebuild composites photo wallpapers on Wayland |
 | cinnamon-menus | 6.7.0-1.el10 | Menu configuration |
-| cinnamon-rocky-defaults | 1.0-2.el10 | Rocky branding. Sets the Gemstone Skies wallpaper and the Rocky logo on the menu button |
+| cinnamon-rocky-defaults | 1.0-3.el10 | Rocky branding. Sets the Gemstone Skies wallpaper and the Rocky logo on the menu button |
 | cinnamon-session | 6.7.3-1.el10 | Session manager |
 | cinnamon-settings-daemon | 6.7.2-3.el10 | Settings daemon |
 | cjs | 6.4.0-1.el10 | Cinnamon JavaScript environment |

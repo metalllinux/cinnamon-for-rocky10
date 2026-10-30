@@ -13,7 +13,7 @@ dfca460fe4571091bf0c25d5baeb39c6e8b5879fe9ff9f6260635b9c2cddb79b  cinnamon-deskt
 28097dc6e676e41530b7de8be79239c3f0ef7b286ba3e7873ad12e45fef661fd  cinnamon-menus-debuginfo-6.7.0-1.el10.x86_64.rpm
 c9712504f67cf696aad325bd4ec4d7999e5311874ba25831eefd0b86d6ca4021  cinnamon-menus-debugsource-6.7.0-1.el10.x86_64.rpm
 71c3b818ebf7344d9ab6571f92b9131cc3653bc98b332589c40885bc805cbec1  cinnamon-menus-devel-6.7.0-1.el10.x86_64.rpm
-e41efb93a456bf87a3f37a9fac773dc206ba0361ba6934ca94d4c12c16eedfa9  cinnamon-rocky-defaults-1.0-2.el10.noarch.rpm
+60ea201e21e0412dfaec17823448dc9581de87aa7f9a98ea56731929a496422d  cinnamon-rocky-defaults-1.0-3.el10.noarch.rpm
 72c84e824f2324df9f5af093a47a2408b66205eb89d15acefc218b00af3bb887  cinnamon-session-6.7.3-1.el10.x86_64.rpm
 8a835c0b49bd07bd7093d9e41f08fdc589ce632a29b7303f290db1c966324995  cinnamon-session-debuginfo-6.7.3-1.el10.x86_64.rpm
 70108a65d554b31cd0ca100fc89f5b5afaf0ac276d300ebaf45c1092cd8382e6  cinnamon-session-debugsource-6.7.3-1.el10.x86_64.rpm

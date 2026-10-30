@@ -39,7 +39,7 @@ two rebuilt ones.
 | Package | Version | What it provides |
 |---------|---------|------------------|
 | gnome-terminal | 3.54.5-1.el10 | The desktop terminal |
-| cinnamon-rocky-defaults | 1.0-2.el10 | Rocky branding. The Gemstone Skies wallpaper and the Rocky logo on the menu button, pulled from `rocky-backgrounds` and `rocky-logos` by dependency |
+| cinnamon-rocky-defaults | 1.0-3.el10 | Rocky branding. The Gemstone Skies wallpaper and the Rocky logo on the menu button, pulled from `rocky-backgrounds` and `rocky-logos` by dependency |
 | python3-pillow | 12.3.0-2.el10 | Settings app dependency (image handling) |
 | python3-setproctitle | 1.3.7-2.el10 | Settings app dependency (process title) |
 | python3-tinycss2 | 1.5.1-2.el10 | Settings app dependency (CSS parsing) |
@@ -114,8 +114,9 @@ version gap is a recorded deviation, not an oversight.
   A clean-checkout rebuild from a fresh clone reproduces the published set
   (verified 2026-09-19).
 - Every source-built spec installs the component's license file under
-  /usr/share/licenses/. The published RPM set predates that addition and
-  does not carry the license files.
+  /usr/share/licenses/. The published set carries them in 12 of its
+  64 RPMs, and the other 52 carry none. The License section lists the
+  12 by package and the files each ships.
 
 ## Test results
 
@@ -186,6 +187,26 @@ See each component's `COPYING` file, plus `COPYING.LIB` or
 `COPYING.LESSER` where dual-licensed, for the full text.
 
 Every source-built spec installs the component's license file under
-/usr/share/licenses/. The published RPM set was built before that
-addition, so it does not carry the license files. A rebuild from
-spec/ is required to ship them.
+/usr/share/licenses/. Of the 64 published RPMs, 12 carry them, all main
+packages, and the other 52 carry none. The 52 without them are the 10
+main packages built before their specs gained the license install
+(cinnamon-control-center, cinnamon-desktop, cinnamon-menus,
+cinnamon-session, cjs, muffin, muffin-clutter, muffin-cogl, nemo,
+xapps-lib) plus the 42 debug, devel, and source variant RPMs. A rebuild
+of those 10 packages from spec/ ships the files in their main RPMs.
+The table lists the 12 that carry them, by package and file.
+
+| RPM | Files under /usr/share/licenses/ |
+|-----|----------------------------------|
+| cinnamon 6.7.4-4 | COPYING (GPL-2.0) |
+| cinnamon-rocky-defaults 1.0-3 | LICENSE (GPL-2.0) |
+| cinnamon-settings-daemon 6.7.2-3 | COPYING (GPL-2.0), COPYING.LIB (LGPL-2.1) |
+| gdk-pixbuf-parsers 2.42.12-2 | COPYING (LGPL-2.1) |
+| gnome-terminal 3.54.5-1 | COPYING (GPL-3.0), COPYING.GFDL (GFDL 1.3) |
+| gtk-layer-shell 0.10.1-1 | LICENSE_LGPL.txt (LGPL-3.0) |
+| mozjs115 115.29.0-1 | LICENSE, license.html (MPL 2.0) |
+| python3-pillow 12.3.0-2 | LICENSE (Pillow license) |
+| python3-setproctitle 1.3.7-2 | LICENSE (BSD 3-Clause) |
+| python3-tinycss2 1.5.1-2 | LICENSE (BSD 3-Clause) |
+| python3-webencodings 0.5.1-1 | LICENSE (BSD 2-Clause) |
+| python3-xapp 3.0.2-1 | COPYING (LGPL-2.0) |
