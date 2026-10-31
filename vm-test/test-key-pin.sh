@@ -16,7 +16,7 @@
 #   3. The real setup-repo.sh run as root against a synthetic project
 #      root whose key file carries the tracked key plus an attacker
 #      key, asserting the pin dies before any host state change (rpm
-#      keyring, /etc/yum.repos.d, createrepo_c).
+#      keyring, /etc/yum.repos.d, createrepo_c, gnupg2).
 #
 # No secret key material is used. The attacker key is a throwaway key
 # generated for this run, exported as public-only, and its keyring
@@ -156,9 +156,9 @@ check_variant "pin: empty file fails" \
 
 # The synthetic root carries the tracked key plus an attacker key. The
 # real script must die at the pin, before rpm --import and before any
-# state change. Guards: createrepo_c must already be installed (the
-# script would otherwise dnf install it, a host state change), and
-# passwordless sudo must be available.
+# state change. Guards: createrepo_c and gnupg2 must already be
+# installed (the script self-installs either one if missing, a host
+# state change), and passwordless sudo must be available.
 host_state() {
     { rpm -qa 2>/dev/null | grep '^gpg-pubkey-' | LC_ALL=C sort; } || true
     { find /etc/yum.repos.d -maxdepth 1 -name '*.repo' -type f -exec md5sum {} + 2>/dev/null | LC_ALL=C sort; } || true
@@ -167,10 +167,17 @@ host_state() {
     else
         echo "createrepo_c:absent"
     fi
+    if rpm -q --quiet gnupg2 2>/dev/null; then
+        echo "gnupg2:installed"
+    else
+        echo "gnupg2:absent"
+    fi
 }
 
 if ! command -v createrepo_c >/dev/null 2>&1; then
     record "end-to-end: root run with attacker key file" "SKIP" "createrepo_c not installed on the host (the run would trigger dnf install)"
+elif ! command -v gpg >/dev/null 2>&1; then
+    record "end-to-end: root run with attacker key file" "SKIP" "gpg (gnupg2) not installed on the host (the run would trigger dnf install)"
 elif ! sudo -n true >/dev/null 2>&1; then
     record "end-to-end: root run with attacker key file" "SKIP" "passwordless sudo unavailable"
 else
@@ -190,7 +197,7 @@ else
 
     if [ "$rc" -eq 1 ] && grep -q "does not hold exactly the tracked key" <<< "$root_out" \
         && [ "$state_before" = "$state_after" ]; then
-        record "end-to-end: root run with attacker key file" "PASS" "rc=1 at the pin, no host state change (rpm keyring, /etc/yum.repos.d, createrepo_c)"
+        record "end-to-end: root run with attacker key file" "PASS" "rc=1 at the pin, no host state change (rpm keyring, /etc/yum.repos.d, createrepo_c, gnupg2)"
     else
         record "end-to-end: root run with attacker key file" "FAIL" "rc=${rc}; output: ${root_out}"
         if [ "$state_before" != "$state_after" ]; then

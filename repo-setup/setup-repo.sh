@@ -9,7 +9,7 @@
 #
 # The script will:
 #   1. Verify the rpms/ directory and its metadata exist.
-#   2. Install createrepo_c if missing.
+#   2. Install createrepo_c and gnupg2 if missing.
 #   3. Generate metadata with createrepo_c if the repodata/ directory is absent.
 #   4. Verify the repo GPG public key holds exactly the tracked key, and
 #      import it into the rpm keyring.
@@ -143,13 +143,25 @@ fi
 info "Found ${RPM_COUNT} RPM files."
 
 # -------------------------------------------------------------------
-# Step 1 — Install createrepo_c if missing
+# Step 1 — Install createrepo_c and gnupg2 if missing
 # -------------------------------------------------------------------
 if ! command -v createrepo_c >/dev/null 2>&1; then
     info "createrepo_c not found. Installing..."
     dnf install -y createrepo_c || die "Failed to install createrepo_c."
 else
     info "createrepo_c already installed ($(createrepo_c --version 2>&1 | head -1))."
+fi
+
+# gnupg2 provides the gpg binary that verify_tracked_key_file uses to
+# pin the tracked key set before the rpm keyring import. It is not in
+# the RHEL 10 Core group, so a fresh minimal install carries no gpg;
+# the self-install is the same dnf pattern as createrepo_c above, and
+# a re-run finds gpg already present and skips the install.
+if ! command -v gpg >/dev/null 2>&1; then
+    info "gpg (gnupg2) not found. Installing..."
+    dnf install -y gnupg2 || die "Failed to install gnupg2."
+else
+    info "gpg (gnupg2) already installed ($(gpg --version 2>&1 | head -1))."
 fi
 
 # -------------------------------------------------------------------

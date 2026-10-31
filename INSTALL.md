@@ -19,16 +19,17 @@ dependencies and future updates.
 
 1. Clone or copy the project to any directory on the target machine.
 
-2. Run the repository setup script. The script installs `createrepo_c` if
-   missing and generates repository metadata when `rpms/repodata/` is
-   absent. A fresh clone has no metadata because the `repodata/` directory
-   is not tracked in git, so a fresh clone exercises the generation path,
-   and the `createrepo_c` self-install from AppStream works on a minimal
-   image. A copy that carries `repodata/` skips generation instead. The
-   procedure is correct on both paths. The script then verifies that
-   the repository's public GPG key at
-   `keys/cinnamon-rocky10-public.asc` holds exactly the tracked key,
-   imports it into the rpm keyring, and writes
+2. Run the repository setup script. The script installs `createrepo_c`
+   and `gnupg2` if missing and generates repository metadata when
+   `rpms/repodata/` is absent. A fresh clone has no metadata because
+   the `repodata/` directory is not tracked in git, so a fresh clone
+   exercises the generation path, and both self-installs work on a
+   minimal image, `createrepo_c` from AppStream and `gnupg2` from
+   BaseOS. A copy that carries `repodata/` skips generation instead.
+   The procedure is correct on both paths. The script then verifies,
+   with the `gpg` binary from `gnupg2`, that the repository's public
+   GPG key at `keys/cinnamon-rocky10-public.asc` holds exactly the
+   tracked key, imports it into the rpm keyring, and writes
    `/etc/yum.repos.d/cinnamon-rocky10.repo` with `gpgcheck=1`, so dnf
    verifies the signature of every package it installs against that key,
    the same model the EL base repositories use. It enables the CRB
@@ -184,9 +185,9 @@ work inside it, through Xwayland, which the GDM install pulls in.
 
 If you prefer not to use the setup script, follow these steps.
 
-1. Install createrepo_c.
+1. Install createrepo_c and gnupg2.
 ```
-sudo dnf install -y createrepo_c
+sudo dnf install -y createrepo_c gnupg2
 ```
 
 2. Generate repository metadata in the rpms/ directory.
@@ -195,15 +196,16 @@ sudo createrepo_c /path/to/cinnamon-for-rocky10/rpms/
 ```
 
 3. Verify the key file, then import the repository's public GPG key into
-   the rpm keyring, from the project root.
+   the rpm keyring, from the project root. The check runs `gpg` from
+   the `gnupg2` package, installed by step 1.
 ```
-gpg --show-keys --with-fingerprint keys/cinnamon-rocky10-public.asc
+gpg --with-colons --show-keys keys/cinnamon-rocky10-public.asc
 ```
-The output must show exactly two keys, the primary with fingerprint
-`2274BFE1BF28C051CD98675BEBD13108EB7FEF99` and its signing subkey with
-fingerprint `CD4958E1A421CBD6B56B7C5614CF2C0A8A47323C`. If the file
-shows any other key, it is not the tracked key, and the import must not
-run. The setup script performs this same check before its import.
+The output must show exactly two `fpr:` lines, the primary's
+fingerprint `2274BFE1BF28C051CD98675BEBD13108EB7FEF99` and the signing
+subkey's fingerprint `CD4958E1A421CBD6B56B7C5614CF2C0A8A47323C`. If the
+file shows any other key, it is not the tracked key, and the import must
+not run. The setup script performs this same check before its import.
 ```
 sudo rpm --import keys/cinnamon-rocky10-public.asc
 ```
@@ -301,22 +303,27 @@ verifies the signature of every package it installs once the key is
 imported, whether by `setup-repo.sh` in Quick start or by step 3 of the
 manual path. An attacker without the private key cannot re-sign, so a set
 that dnf accepts under `gpgcheck=1` is a set the key holder signed. You
-can verify the same thing directly, without dnf.
+can verify the same thing directly, without dnf. The `gpg` command
+comes from the `gnupg2` package, which a fresh minimal install does not
+carry, so install it first if it is missing.
+```
+sudo dnf install -y gnupg2
+```
 
 ```
-gpg --show-keys --with-fingerprint keys/cinnamon-rocky10-public.asc
+gpg --with-colons --show-keys keys/cinnamon-rocky10-public.asc
 sudo rpm --import keys/cinnamon-rocky10-public.asc
 for f in rpms/*.rpm; do rpm --checksig "$f"; done
 ```
 
-The key file must show exactly two keys, the primary with fingerprint
-`2274BFE1BF28C051CD98675BEBD13108EB7FEF99` and its signing subkey with
-fingerprint `CD4958E1A421CBD6B56B7C5614CF2C0A8A47323C`. The import must
-not run if it shows any other key. Every RPM must then report
-`digests signatures OK`. Before trusting the key, compare the primary
-fingerprint against the value published out-of-band on metalinux.dev.
-The key file served by the repository is not an independent source of
-trust.
+The key file must show exactly two `fpr:` lines, the primary's
+fingerprint `2274BFE1BF28C051CD98675BEBD13108EB7FEF99` and the signing
+subkey's fingerprint `CD4958E1A421CBD6B56B7C5614CF2C0A8A47323C`. The
+import must not run if it shows any other key. Every RPM must then
+report `digests signatures OK`. Before trusting the key, compare the
+primary fingerprint against the value published out-of-band on
+metalinux.dev. The key file served by the repository is not an
+independent source of trust.
 
 ### Why both
 
