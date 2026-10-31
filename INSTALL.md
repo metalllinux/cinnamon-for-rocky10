@@ -25,9 +25,10 @@ dependencies and future updates.
    is not tracked in git, so a fresh clone exercises the generation path,
    and the `createrepo_c` self-install from AppStream works on a minimal
    image. A copy that carries `repodata/` skips generation instead. The
-   procedure is correct on both paths. The script then imports the
-   repository's public GPG key from `keys/cinnamon-rocky10-public.asc`
-   into the rpm keyring and writes
+   procedure is correct on both paths. The script then verifies that
+   the repository's public GPG key at
+   `keys/cinnamon-rocky10-public.asc` holds exactly the tracked key,
+   imports it into the rpm keyring, and writes
    `/etc/yum.repos.d/cinnamon-rocky10.repo` with `gpgcheck=1`, so dnf
    verifies the signature of every package it installs against that key,
    the same model the EL base repositories use. It enables the CRB
@@ -193,15 +194,22 @@ sudo dnf install -y createrepo_c
 sudo createrepo_c /path/to/cinnamon-for-rocky10/rpms/
 ```
 
-3. Import the repository's public GPG key into the rpm keyring, from the
-   project root.
+3. Verify the key file, then import the repository's public GPG key into
+   the rpm keyring, from the project root.
+```
+gpg --show-keys --with-fingerprint keys/cinnamon-rocky10-public.asc
+```
+The output must show exactly two keys, the primary with fingerprint
+`2274BFE1BF28C051CD98675BEBD13108EB7FEF99` and its signing subkey with
+fingerprint `CD4958E1A421CBD6B56B7C5614CF2C0A8A47323C`. If the file
+shows any other key, it is not the tracked key, and the import must not
+run. The setup script performs this same check before its import.
 ```
 sudo rpm --import keys/cinnamon-rocky10-public.asc
 ```
-The key is at `keys/cinnamon-rocky10-public.asc` (fingerprint
-`2274BFE1BF28C051CD98675BEBD13108EB7FEF99`). The import fills the rpm
-keyring, which dnf uses for the `gpgcheck=1` verification in step 4 and
-which the "Verifying the release" checks use for `rpm --checksig`.
+The key is at `keys/cinnamon-rocky10-public.asc`. The import fills the
+rpm keyring, which dnf uses for the `gpgcheck=1` verification in step 4
+and which the "Verifying the release" checks use for `rpm --checksig`.
 Importing a key that is already present is a no-op, so a re-run is safe.
 
 4. Create `/etc/yum.repos.d/cinnamon-rocky10.repo` with the following
@@ -296,16 +304,19 @@ that dnf accepts under `gpgcheck=1` is a set the key holder signed. You
 can verify the same thing directly, without dnf.
 
 ```
+gpg --show-keys --with-fingerprint keys/cinnamon-rocky10-public.asc
 sudo rpm --import keys/cinnamon-rocky10-public.asc
 for f in rpms/*.rpm; do rpm --checksig "$f"; done
 ```
 
-Every RPM must report `digests signatures OK`. The public key is
-`keys/cinnamon-rocky10-public.asc`, fingerprint
-`2274BFE1BF28C051CD98675BEBD13108EB7FEF99`. Before trusting the key,
-compare this fingerprint against the value published out-of-band on
-metalinux.dev. The key file served by the repository is not an independent
-source of trust.
+The key file must show exactly two keys, the primary with fingerprint
+`2274BFE1BF28C051CD98675BEBD13108EB7FEF99` and its signing subkey with
+fingerprint `CD4958E1A421CBD6B56B7C5614CF2C0A8A47323C`. The import must
+not run if it shows any other key. Every RPM must then report
+`digests signatures OK`. Before trusting the key, compare the primary
+fingerprint against the value published out-of-band on metalinux.dev.
+The key file served by the repository is not an independent source of
+trust.
 
 ### Why both
 

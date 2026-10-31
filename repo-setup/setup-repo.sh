@@ -11,7 +11,8 @@
 #   1. Verify the rpms/ directory and its metadata exist.
 #   2. Install createrepo_c if missing.
 #   3. Generate metadata with createrepo_c if the repodata/ directory is absent.
-#   4. Import the repo GPG public key into the rpm keyring.
+#   4. Verify the repo GPG public key holds exactly the tracked key, and
+#      import it into the rpm keyring.
 #   5. Write /etc/yum.repos.d/cinnamon-rocky10.repo (gpgcheck=1)
 #      pointing at the rpms/ path.
 #   6. Enable the CRB (CodeReady Builder) repository.
@@ -41,6 +42,12 @@ REPO_FILE="/etc/yum.repos.d/${REPO_NAME}.repo"
 # gpg-pubkey-fda02785-6ab101f4, TASK-0024 item 1). Public data; the key
 # ships at keys/cinnamon-rocky10-public.asc.
 KEY_ID="eb7fef99"
+# Full fingerprints of the tracked key, primary and signing subkey.
+# Public data: the key ships at keys/cinnamon-rocky10-public.asc, the
+# primary names KEY_ID above, and sign-rpms.sh pins the same primary as
+# EXPECTED_FINGERPRINT (sign-rpms.sh:66).
+EXPECTED_PRIMARY_FINGERPRINT="2274BFE1BF28C051CD98675BEBD13108EB7FEF99"
+EXPECTED_SUBKEY_FINGERPRINT="CD4958E1A421CBD6B56B7C5614CF2C0A8A47323C"
 
 # -------------------------------------------------------------------
 # Helpers
@@ -52,6 +59,47 @@ die() {
 
 info() {
     echo "INFO: $*"
+}
+
+# Throwaway keyring for verify_tracked_key_file, cleaned by the EXIT
+# trap. Global (not local) so the trap body can reference it after the
+# function frame is gone; the trap is installed only after the
+# assignment, so the empty initial value is never used.
+KEYCHECK_KEYRING=""
+
+# Verify that a key file holds exactly the tracked key, the primary and
+# its signing subkey, and nothing else, before the host rpm
+# keyring sees it. The key file is tree-controlled, so the post-import
+# keyid check alone proves presence, not the absence of extra keys:
+# a file carrying the tracked key plus an attacker key would pass that
+# check, and dnf under gpgcheck=1 would then accept attacker-signed
+# packages. The file is imported into a throwaway keyring and its full
+# fingerprint set compared against the two tracked fingerprints,
+# mirroring the EXPECTED_FINGERPRINT pin in sign-rpms.sh:66
+# (TASK-0038, Omega high finding, 2026-10-31).
+verify_tracked_key_file() {
+    local key_file="$1"
+
+    command -v gpg >/dev/null 2>&1 || die "gpg not found (gnupg2). It is required to verify the key file fingerprint before import."
+
+    KEYCHECK_KEYRING="$(mktemp -d)" || die "could not create a temporary keyring directory."
+    trap 'rm -rf "${KEYCHECK_KEYRING}"' EXIT
+
+    # Import into the throwaway keyring, never the host keyring. A file
+    # that is not a valid armored public key fails here.
+    gpg --batch --homedir "${KEYCHECK_KEYRING}" --import "${key_file}" >/dev/null 2>&1 \
+        || die "key file ${key_file} is not a valid armored public key."
+
+    # The full key set the file holds, one line per fingerprint.
+    local found expected
+    found="$(gpg --homedir "${KEYCHECK_KEYRING}" --with-colons --list-keys 2>/dev/null \
+        | awk -F: '$1 == "fpr" { print toupper($10) }' | LC_ALL=C sort -u)" \
+        || die "gpg could not list the keys of ${key_file}."
+    expected="$(printf '%s\n%s\n' "${EXPECTED_PRIMARY_FINGERPRINT}" "${EXPECTED_SUBKEY_FINGERPRINT}" | LC_ALL=C sort -u)"
+
+    if [ "$found" != "$expected" ]; then
+        die "key file ${key_file} does not hold exactly the tracked key (expected ${EXPECTED_PRIMARY_FINGERPRINT} plus ${EXPECTED_SUBKEY_FINGERPRINT}, found: $(printf '%s' "$found" | tr '\n' ' ')). Refusing to import."
+    fi
 }
 
 # -------------------------------------------------------------------
@@ -129,6 +177,10 @@ KEY_FILE="${PROJECT_ROOT}/keys/cinnamon-rocky10-public.asc"
 if [ ! -f "$KEY_FILE" ]; then
     die "GPG public key not found at ${KEY_FILE}."
 fi
+
+# Pin the key set before the import (see verify_tracked_key_file).
+verify_tracked_key_file "${KEY_FILE}"
+info "Key file holds exactly the tracked key (${EXPECTED_PRIMARY_FINGERPRINT})."
 
 info "Importing repo GPG public key (${KEY_ID}) into the rpm keyring..."
 rpm --import "${KEY_FILE}" || die "rpm --import failed for ${KEY_FILE}."
