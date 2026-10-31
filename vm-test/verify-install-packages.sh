@@ -30,25 +30,30 @@ PKG_VERIFY_LOG="${RESULTS_DIR}/package-verify.log"
 # The versions here must match the committed release set (rpms/
 # filenames, cross-checked against rpms/SHA256SUMS). Pins updated for
 # the TASK-0038 final set (cinnamon-settings-daemon 6.7.2-2 -> 6.7.2-3,
-# cinnamon 6.7.4-3 -> 6.7.4-4); the earlier pins (TASK-0024 re-run at
-# ce7b084) predated the final rebuild and recorded false WARNs.
+# cinnamon 6.7.4-3 -> 6.7.4-4), then re-updated 2026-11-01 for the
+# license-text rebuild (nemo 6.7.4-3, cjs 6.4.0-2, muffin/-clutter/
+# -cogl 6.7.4-4, xapps-lib 3.3.3-2, cinnamon-session 6.7.3-2,
+# cinnamon-menus 6.7.0-2, cinnamon-desktop 6.7.2-3,
+# cinnamon-control-center 6.7.2-2, cinnamon-settings-daemon 6.7.2-4);
+# the earlier pins (TASK-0024 re-run at ce7b084) predated the final
+# rebuild and recorded false WARNs.
 # Regenerate this table from rpms/ whenever the set is rebuilt.
 # Note: test-repo-setup.sh carries its own inline copy of this table
 # (PKG_LIST, Phase 5) for the full harness run; keep both in lockstep.
 BASE_PACKAGES=(
     "mozjs115|115.29.0-1.el10|SpiderMonkey JavaScript engine runtime"
     "mozjs115-devel|115.29.0-1.el10|mozjs115 headers and pkg-config"
-    "cjs|6.4.0-1.el10|GNOME JavaScript environment"
-    "muffin|6.7.4-3.el10|Cinnamon window manager compositor"
-    "muffin-clutter|6.7.4-3.el10|Muffin Clutter rendering library"
-    "muffin-cogl|6.7.4-3.el10|Muffin Cogl rendering library"
-    "cinnamon-desktop|6.7.2-2.el10|Desktop library and applet framework"
-    "xapps-lib|3.3.3-1.el10|Shared Cinnamon application libraries"
-    "cinnamon-session|6.7.3-1.el10|Session manager"
-    "cinnamon-settings-daemon|6.7.2-3.el10|Settings daemon"
-    "cinnamon-control-center|6.7.2-1.el10|Settings panel"
-    "cinnamon-menus|6.7.0-1.el10|Menu configuration"
-    "nemo|6.7.4-2.el10|File manager"
+    "cjs|6.4.0-2.el10|GNOME JavaScript environment"
+    "muffin|6.7.4-4.el10|Cinnamon window manager compositor"
+    "muffin-clutter|6.7.4-4.el10|Muffin Clutter rendering library"
+    "muffin-cogl|6.7.4-4.el10|Muffin Cogl rendering library"
+    "cinnamon-desktop|6.7.2-3.el10|Desktop library and applet framework"
+    "xapps-lib|3.3.3-2.el10|Shared Cinnamon application libraries"
+    "cinnamon-session|6.7.3-2.el10|Session manager"
+    "cinnamon-settings-daemon|6.7.2-4.el10|Settings daemon"
+    "cinnamon-control-center|6.7.2-2.el10|Settings panel"
+    "cinnamon-menus|6.7.0-2.el10|Menu configuration"
+    "nemo|6.7.4-3.el10|File manager"
     "cinnamon|6.7.4-4.el10|Cinnamon desktop shell"
 )
 

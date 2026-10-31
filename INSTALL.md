@@ -351,28 +351,28 @@ published in `rpms/`, plus `gnome-icon-theme` from the EPEL repository.
 | Package | Version | Purpose |
 |---------|---------|---------|
 | cinnamon | 6.7.4-4.el10 | Desktop shell. Bundles the Cinnamon Settings app and the cinnamon-wayland session |
-| cinnamon-control-center | 6.7.2-1.el10 | System Settings app (32 panels) |
-| cinnamon-desktop | 6.7.2-2.el10 | Desktop library. The 2.el10 rebuild composites photo wallpapers on Wayland |
-| cinnamon-menus | 6.7.0-1.el10 | Menu configuration |
+| cinnamon-control-center | 6.7.2-2.el10 | System Settings app (32 panels) |
+| cinnamon-desktop | 6.7.2-3.el10 | Desktop library. The 2.el10 rebuild composites photo wallpapers on Wayland |
+| cinnamon-menus | 6.7.0-2.el10 | Menu configuration |
 | cinnamon-rocky-defaults | 1.0-3.el10 | Rocky branding. Sets the Gemstone Skies wallpaper and the Rocky logo on the menu button |
-| cinnamon-session | 6.7.3-1.el10 | Session manager |
-| cinnamon-settings-daemon | 6.7.2-3.el10 | Settings daemon |
-| cjs | 6.4.0-1.el10 | Cinnamon JavaScript environment |
+| cinnamon-session | 6.7.3-2.el10 | Session manager |
+| cinnamon-settings-daemon | 6.7.2-4.el10 | Settings daemon |
+| cjs | 6.4.0-2.el10 | Cinnamon JavaScript environment |
 | gdk-pixbuf-parsers | 2.42.12-2.el10 | PNG and JPEG image loaders. EL10's gdk-pixbuf2 ships none, and photo wallpapers render black without them |
 | gnome-icon-theme | 3.12.0-25.el10_1 | Icon theme. Provides the gnome icon theme and the preferences-desktop icons the settings app uses |
 | gnome-terminal | 3.54.5-1.el10 | Terminal. Newest release compatible with EL10's vte291 0.78.6 |
 | gtk-layer-shell | 0.10.1-1.el10 | Wayland layer-shell library for the desktop background |
 | mozjs115 | 115.29.0-1.el10 | SpiderMonkey JavaScript engine runtime |
-| muffin | 6.7.4-3.el10 | Cinnamon window manager compositor, built with Wayland |
-| muffin-clutter | 6.7.4-3.el10 | Muffin Clutter rendering library |
-| muffin-cogl | 6.7.4-3.el10 | Muffin Cogl rendering library |
-| nemo | 6.7.4-2.el10 | File manager and desktop icons |
+| muffin | 6.7.4-4.el10 | Cinnamon window manager compositor, built with Wayland |
+| muffin-clutter | 6.7.4-4.el10 | Muffin Clutter rendering library |
+| muffin-cogl | 6.7.4-4.el10 | Muffin Cogl rendering library |
+| nemo | 6.7.4-3.el10 | File manager and desktop icons |
 | python3-pillow | 12.3.0-2.el10 | Settings app dependency (image handling) |
 | python3-setproctitle | 1.3.7-2.el10 | Settings app dependency (process title) |
 | python3-tinycss2 | 1.5.1-2.el10 | Settings app dependency (CSS parsing) |
 | python3-webencodings | 0.5.1-2.el10 | Runtime dependency of tinycss2 |
 | python3-xapp | 3.0.2-1.el10 | Settings app dependency (XApp API) |
-| xapps-lib | 3.3.3-1.el10 | Shared Cinnamon application libraries |
+| xapps-lib | 3.3.3-2.el10 | Shared Cinnamon application libraries |
 
 ## GDM session configuration
 
@@ -396,7 +396,7 @@ sudo systemctl restart gdm
 
 Photo wallpapers need the PNG and JPEG image loaders and the
 cinnamon-desktop compositing fix. The published set ships both
-(`gdk-pixbuf-parsers`, `cinnamon-desktop-6.7.2-2.el10`), so a complete
+(`gdk-pixbuf-parsers`, `cinnamon-desktop-6.7.2-3.el10`), so a complete
 install should not hit this. If you installed a partial set, check both
 packages.
 ```

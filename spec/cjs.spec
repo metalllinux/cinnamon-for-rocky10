@@ -1,6 +1,6 @@
 Name:           cjs
 Version:        6.4.0
-Release:        1.el10
+Release:        2.el10
 Summary:        The Cinnamon JavaScript interpreter
 
 License:        MIT and LGPL-2.0-or-later
@@ -71,6 +71,10 @@ DESTDIR=%{buildroot} ninja -C redhat-linux-build install -v
 %{_includedir}/cjs-1.0
 
 %changelog
+* Sun Nov 01 2026 Team Chaotix <chaotix@metallinux.dev> - 6.4.0-2
+- Rebuild from the tip spec so the package ships the license text declared
+  by %license (COPYING)
+
 * Sun Aug 09 2026 Team Chaotix <chaotix@metallinux.dev> - 6.4.0-1
 - Initial port to Rocky Linux 10 from Fedora spec
 - mozjs115-devel required (not in EL10 repos, must be built separately)

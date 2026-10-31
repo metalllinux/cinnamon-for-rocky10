@@ -1,6 +1,6 @@
 Name:           cinnamon-menus
 Version:        6.7.0
-Release:        1.el10
+Release:        2.el10
 Summary:        Cinnamon menus library
 
 License:        GPLv2+ and LGPL2+
@@ -64,5 +64,9 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %{_includedir}/cinnamon-menus-3.0
 
 %changelog
+* Sun Nov 01 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.0-2
+- Rebuild from the tip spec so the package ships the license text declared
+  by %license (COPYING, COPYING.LIB)
+
 * Sun Aug 10 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.0-1
 - Initial port to Rocky Linux 10

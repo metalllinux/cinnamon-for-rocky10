@@ -1,12 +1,23 @@
 Name:           muffin
 Version:        6.7.4
-Release:        3.el10
+Release:        4.el10
 Summary:        The Muffin window manager for Cinnamon
 
 License:        GPLv2+
 URL:            https://github.com/linuxmint/muffin
-Source0:        https://github.com/linuxmint/muffin/archive/refs/tags/%{version}.tar.gz#/muffin-%{version}.tar.gz
-# SHA256: ae881d93b128faa457710764dbb49f29fa16dd4877db9101c1960723b0c3ebb4
+Source0:        https://github.com/linuxmint/muffin/archive/6ed5907a15ae5614c74682f8c736745f4b3a6fab.tar.gz#/muffin-%{version}.tar.gz
+# SHA256: 3cfb730faf2de1a620b3ecb2260c289be7c333fe9cedc90e09dcb47df2ef6701
+# Source0 provenance (verified 2026-11-01 by full tree diff against upstream):
+#   content = linuxmint/muffin @ 6ed5907a15ae (2026-08-06,
+#   "meta-backend-native.c: Handle NULL from xkb_keymap_new_from_names.").
+#   Upstream does not tag release versions; the old 6.7.4 tag (whose
+#   tarball was recorded as ae881d93b128...) has been deleted upstream, so
+#   Source0 pins this fetchable commit ref (top dir
+#   muffin-6ed5907a15ae5614c74682f8c736745f4b3a6fab); the # SHA256 above is
+#   of that commit tarball and is reproducible from the URL.
+#   Provenance check: diff -r of the staged Source0 tree against a clean
+#   checkout of 6ed5907a15ae (tracked-clean, what the 6.7.4-4 build
+#   verified, TASK-0038).
 
 BuildRequires:  meson >= 1.0.0
 BuildRequires:  ninja-build
@@ -154,6 +165,7 @@ DESTDIR=%{buildroot} ninja -C redhat-linux-build install
 %{_includedir}/muffin
 
 %files -n muffin-clutter
+%license COPYING
 %{_libdir}/muffin/libmuffin-clutter-0.so.*
 %{_libdir}/muffin/Cally-0.gir
 %{_libdir}/muffin/Cally-0.typelib
@@ -169,6 +181,7 @@ DESTDIR=%{buildroot} ninja -C redhat-linux-build install
 %{_includedir}/muffin/clutter
 
 %files -n muffin-cogl
+%license COPYING
 %{_libdir}/muffin/libmuffin-cogl-0.so.*
 %{_libdir}/muffin/libmuffin-cogl-path-0.so.*
 %{_libdir}/muffin/libmuffin-cogl-pango-0.so.*
@@ -186,6 +199,12 @@ DESTDIR=%{buildroot} ninja -C redhat-linux-build install
 %{_libdir}/pkgconfig/muffin-cogl-pango-0.pc
 
 %changelog
+* Sun Nov 01 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-4
+- Source0: pin the fetchable commit tarball 6ed5907a15ae (the 6.7.4 tag
+  was deleted upstream, so the tag tarball no longer exists)
+- %license COPYING in muffin-clutter and muffin-cogl so all three runtime
+  packages ship the license text declared by the spec
+
 * Thu Aug 13 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-3
 - Fix circular dependency: muffin-clutter no longer requires muffin
 - Add SHA256 checksum for source

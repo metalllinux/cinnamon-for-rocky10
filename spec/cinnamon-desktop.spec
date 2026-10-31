@@ -1,11 +1,22 @@
 Name:           cinnamon-desktop
 Version:        6.7.2
-Release:        2.el10
+Release:        3.el10
 Summary:        Cinnamon desktop utility library
 
 License:        GPLv2+ and LGPL2+
 URL:            https://github.com/linuxmint/cinnamon-desktop
 Source0:        %{name}-%{version}.tar.gz
+# Source0 provenance (verified 2026-11-01 by full tree diff against upstream):
+#   content = linuxmint/cinnamon-desktop @ 934d693ca833 (2026-07-26,
+#   "org.cinnamon.desktop.keybindings.gschema: Add 'show-panels'
+#   keybinding setting."). Upstream does not tag release versions;
+#   fetchable content ref (top dir cinnamon-desktop-934d693ca833):
+#     https://github.com/linuxmint/cinnamon-desktop/archive/934d693ca8336271fc321f30f0b93f7029255129.tar.gz
+#   Provenance check: diff -r of the staged Source0 tree against a clean
+#   checkout of 934d693ca833 (tracked-clean, what the 6.7.2-3 build
+#   verified, TASK-0038). A per-build tarball sha256 is intentionally not
+#   recorded: tar metadata differs between git archive runs, so such a
+#   hash is not reproducible across builds.
 # TASK-0017: render the wallpaper pixbuf onto a window-similar surface so it
 # composites on the gtk-layer-shell / Wayland desktop (the pixbuf-derived
 # surface from gdk_cairo_surface_create_from_pixbuf renders black).
@@ -86,6 +97,10 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %{_libdir}/libcvc.so
 
 %changelog
+* Sun Nov 01 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-3
+- Rebuild from the tip spec so the package ships the license text declared
+  by %license (COPYING, COPYING.LIB)
+
 * Thu Sep 17 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-2
 - TASK-0017: fix black wallpaper on Wayland by rendering the pixbuf onto a
   window-similar surface (gnome-bg-wayland-surface.patch)

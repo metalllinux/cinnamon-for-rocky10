@@ -1,6 +1,6 @@
 Name:           nemo
 Version:        6.7.4
-Release:        2.el10
+Release:        3.el10
 Summary:        The default file manager of the Cinnamon desktop
 
 License:        GPLv2+ and LGPL2+
@@ -104,6 +104,10 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %{_includedir}/nemo
 
 %changelog
+* Sun Nov 01 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-3
+- Rebuild from the tip spec so the package ships the license text declared
+  by %license (COPYING, COPYING.LIB)
+
 * Wed Sep 16 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.4-2
 - Enable the gtk-layer-shell Wayland backend (-Dgtk_layer_shell=true) so
   nemo-desktop renders the desktop background on Cinnamon Wayland instead

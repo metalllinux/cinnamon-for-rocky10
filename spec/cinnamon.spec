@@ -6,6 +6,19 @@ Summary:        GNOME desktop environment fork providing the Cinnamon experience
 License:        GPLv2+
 URL:            https://github.com/linuxmint/cinnamon
 Source0:        %{name}-%{version}.tar.gz
+# Source0 provenance (verified 2026-11-01 by full tree diff against upstream):
+#   content = linuxmint/cinnamon @ e9ba28a87f0f (2026-08-10,
+#   "Fix typo in System Administration Keyword Filters (#13781)") plus
+#   the local commit 61695c722d01 (2026-10-07, "Guard TimezoneMap GI
+#   import in cs_calendar.py"), which is not pushed upstream (its tarball
+#   URL is a 404); fetchable content ref (top dir
+#   cinnamon-e9ba28a87f0f69594487a08e940840d494bb3ea0):
+#     https://github.com/linuxmint/cinnamon/archive/e9ba28a87f0f69594487a08e940840d494bb3ea0.tar.gz
+#   Provenance check: diff -r of the staged Source0 tree against a clean
+#   checkout of e9ba28a87f0f plus the local commit (what the 6.7.4-4
+#   build verified, TASK-0038). A per-build tarball sha256 is
+#   intentionally not recorded: tar metadata differs between git archive
+#   runs, so such a hash is not reproducible across builds.
 Patch0:         xdo-optional-gcr-4.patch
 
 BuildRequires:  meson >= 0.64.0

@@ -1,9 +1,9 @@
 Name:           xapps
 Version:        3.3.3
-Release:        1.el10
+Release:        2.el10
 Summary:        Shared applications for the Cinnamon desktop environment
 
-License:        GPLv3+
+License:        GPLv3+ AND LGPLv3+
 URL:            https://github.com/linuxmint/xapps
 Source0:        %{name}-%{version}.tar.gz
 # Source0 provenance (verified 2026-09-18 by full tree diff against upstream):
@@ -86,6 +86,11 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %{_includedir}/xapp
 
 %changelog
+* Sun Nov 01 2026 Team Chaotix <chaotix@metallinux.dev> - 3.3.3-2
+- License field: GPLv3+ AND LGPLv3+ (was GPLv3+ only)
+- Rebuild from the tip spec so xapps-lib ships the license text declared
+  by %license (COPYING, COPYING.LESSER)
+
 * Sun Aug 10 2026 Team Chaotix <chaotix@metallinux.dev> - 3.3.3-1
 - Initial port to Rocky Linux 10
 - Built with app-lib-only to minimize dependencies

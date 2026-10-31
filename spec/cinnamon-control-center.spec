@@ -1,6 +1,6 @@
 Name:           cinnamon-control-center
 Version:        6.7.2
-Release:        1.el10
+Release:        2.el10
 Summary:        Cinnamon desktop control center
 
 License:        GPLv2+
@@ -92,6 +92,10 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %{_libdir}/pkgconfig/libcinnamon-control-center.pc
 
 %changelog
+* Sun Nov 01 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-2
+- Rebuild from the tip spec so the package ships the license text declared
+  by %license (COPYING)
+
 * Sun Aug 10 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-1
 - Initial port to Rocky Linux 10
 - Disabled networkmanager, modemmanager, and color panels
