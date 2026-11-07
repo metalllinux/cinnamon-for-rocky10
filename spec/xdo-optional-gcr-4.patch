@@ -1,0 +1,296 @@
+diff --git a/meson.build b/meson.build
+index b518a6d..168ce34 100644
+--- a/meson.build
++++ b/meson.build
+@@ -30,7 +30,7 @@ clutter = dependency('muffin-clutter-0')
+ cmenu = dependency('libcinnamon-menu-3.0', version: '>= 4.8.0')
+ cogl = dependency('muffin-cogl-0')
+ cogl_path = dependency('muffin-cogl-path-0')
+-gcr = dependency('gcr-base-3', version: '>= 3.7.5')
++gcr = dependency('gcr-4', version: '>= 3.7.5')
+ gdkx11 = dependency('gdk-x11-3.0')
+ polkit = dependency('polkit-agent-1', version: '>= 0.100')
+ atk = dependency('atk-bridge-2.0')
+@@ -91,7 +91,7 @@ math = cc.find_library('m', required: false)
+ 
+ xdo = dependency('libxdo', required: false)
+ if not xdo.found()
+-    xdo = cc.find_library('xdo')
++    xdo = cc.find_library('xdo', required: false)
+ endif
+ 
+ # PAM authentication library
+@@ -161,6 +161,11 @@ if cc.has_header('X11/extensions/shape.h', dependencies: [X11, xext])
+     cinnamon_conf.set('HAVE_SHAPE_EXT', 1)
+ endif
+ 
++# Check for libxdo (needed for stuck grab recovery)
++if xdo.found()
++    cinnamon_conf.set10('HAVE_XDO', true)
++endif
++
+ config_h_file = configure_file(
+     output : 'config.h',
+     configuration : cinnamon_conf
+diff --git a/src/cinnamon-global-private.h b/src/cinnamon-global-private.h
+index 14112e0..8fde912 100644
+--- a/src/cinnamon-global-private.h
++++ b/src/cinnamon-global-private.h
+@@ -20,7 +20,9 @@
+ #endif
+ 
+ #include <meta/meta-plugin.h>
++#ifdef HAVE_XDO
+ #include <xdo.h>
++#endif
+ 
+ 
+ #include "cinnamon-enum-types.h"
+@@ -37,7 +39,9 @@ typedef struct {
+     guint32                        timestamp;
+     MetaModalOptions               options;
+     gint                           attempt;
++#ifdef HAVE_XDO
+     gboolean                       tried_xdo;
++#endif
+     CinnamonModalCallback          callback;
+     gpointer                       user_data;
+ } ModalRetryData;
+@@ -76,7 +80,9 @@ struct _CinnamonGlobal {
+ 
+   guint notif_service_id;
+ 
++#ifdef HAVE_XDO
+   xdo_t *xdo;
++#endif
+   guint modal_retry_source_id;
+   ModalRetryData *modal_retry_data;
+ };
+diff --git a/src/cinnamon-global.c b/src/cinnamon-global.c
+index 1f0cb3b..75f3846 100644
+--- a/src/cinnamon-global.c
++++ b/src/cinnamon-global.c
+@@ -290,11 +290,13 @@ cinnamon_global_finalize (GObject *object)
+         }
+     }
+ 
++#ifdef HAVE_XDO
+   if (global->xdo != NULL)
+     {
+       xdo_free (global->xdo);
+       global->xdo = NULL;
+     }
++#endif
+ 
+   g_object_unref (global->js_context);
+ 
+@@ -1098,6 +1100,7 @@ modal_try_grab (CinnamonGlobal   *global,
+ static void
+ modal_maybe_cancel_ui_grab (CinnamonGlobal *global)
+ {
++#ifdef HAVE_XDO
+   if (global->xdo == NULL)
+     {
+       debug_grab ("xdo context not available, skipping");
+@@ -1107,6 +1110,9 @@ modal_maybe_cancel_ui_grab (CinnamonGlobal *global)
+   debug_grab ("sending Escape key sequences");
+   xdo_send_keysequence_window (global->xdo, CURRENTWINDOW, "Escape", 12000);
+   xdo_send_keysequence_window (global->xdo, CURRENTWINDOW, "Escape", 12000);
++#else
++  debug_grab ("xdo not available, skipping");
++#endif
+ }
+ 
+ static void
+@@ -1128,9 +1134,14 @@ modal_retry_timeout (gpointer user_data)
+ 
+   data->attempt++;
+ 
++#ifdef HAVE_XDO
+   debug_grab ("attempt %d/%d (xdo_tried=%s)",
+-             data->attempt, MODAL_MAX_RETRIES,
+-             data->tried_xdo ? "true" : "false");
++              data->attempt, MODAL_MAX_RETRIES,
++              data->tried_xdo ? "true" : "false");
++#else
++  debug_grab ("attempt %d/%d",
++              data->attempt, MODAL_MAX_RETRIES);
++#endif
+ 
+   if (modal_try_grab (global, data->options, data->timestamp))
+     {
+@@ -1143,10 +1154,11 @@ modal_retry_timeout (gpointer user_data)
+ 
+   if (data->attempt >= MODAL_MAX_RETRIES)
+     {
++#ifdef HAVE_XDO
+       if (!data->tried_xdo)
+         {
+           debug_grab ("exhausted %d attempts, trying xdo escape + nuke focus",
+-                     MODAL_MAX_RETRIES);
++                      MODAL_MAX_RETRIES);
+           data->tried_xdo = TRUE;
+           data->attempt = 0;
+ 
+@@ -1165,6 +1177,7 @@ modal_retry_timeout (gpointer user_data)
+ 
+           return G_SOURCE_CONTINUE;
+         }
++#endif
+ 
+       debug_grab ("exhausted all retries, giving up");
+       modal_retry_complete (data, FALSE);
+diff --git a/src/cinnamon-keyring-prompt.c b/src/cinnamon-keyring-prompt.c
+index f70b71b..26a8823 100644
+--- a/src/cinnamon-keyring-prompt.c
++++ b/src/cinnamon-keyring-prompt.c
+@@ -27,7 +27,7 @@
+ #include "cinnamon-secure-text-buffer.h"
+ 
+ #define GCR_API_SUBJECT_TO_CHANGE
+-#include <gcr/gcr-base.h>
++#include <gcr/gcr.h>
+ 
+ #include <glib/gi18n.h>
+ 
+@@ -92,11 +92,10 @@ enum {
+ 
+ static GParamSpec *props[N_PROPS] = { NULL, };
+ 
+-static void cinnamon_keyring_prompt_iface (GcrPromptIface *iface);
++static void cinnamon_keyring_prompt_iface (GcrPromptInterface *iface);
+ 
+ G_DEFINE_TYPE_WITH_CODE (CinnamonKeyringPrompt, cinnamon_keyring_prompt, G_TYPE_OBJECT,
+-                         G_IMPLEMENT_INTERFACE (GCR_TYPE_PROMPT, cinnamon_keyring_prompt_iface);
+-);
++                          G_IMPLEMENT_INTERFACE (GCR_TYPE_PROMPT, cinnamon_keyring_prompt_iface))
+ 
+ enum {
+   SIGNAL_SHOW_PASSWORD,
+@@ -532,7 +531,7 @@ cinnamon_keyring_prompt_close (GcrPrompt *prompt)
+ }
+ 
+ static void
+-cinnamon_keyring_prompt_iface (GcrPromptIface *iface)
++cinnamon_keyring_prompt_iface (GcrPromptInterface *iface)
+ {
+   iface->prompt_password_async = cinnamon_keyring_prompt_password_async;
+   iface->prompt_password_finish = cinnamon_keyring_prompt_password_finish;
+diff --git a/src/cinnamon-secure-text-buffer.c b/src/cinnamon-secure-text-buffer.c
+index 03a6497..38aa92f 100644
+--- a/src/cinnamon-secure-text-buffer.c
++++ b/src/cinnamon-secure-text-buffer.c
+@@ -26,7 +26,7 @@
+ #include "cinnamon-secure-text-buffer.h"
+ 
+ #define GCR_API_SUBJECT_TO_CHANGE
+-#include <gcr/gcr-base.h>
++#include <gcr/gcr.h>
+ 
+ #include <string.h>
+ 
+diff --git a/src/meson.build b/src/meson.build
+index ed2504d..40591df 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -112,10 +112,13 @@ libcinnamon_deps = [
+     polkit,
+     st_dep,
+     xapp,
+-    xdo,
+     xml,
+ ]
+ 
++if xdo.found()
++    libcinnamon_deps += xdo
++endif
++
+ libcinnamon_deps += nm_deps
+ 
+ if internal_nm_agent
+@@ -210,7 +213,7 @@ cinnamon_gir_includes = [
+     'Cogl-0',
+     'Meta-0',
+     'CMenu-3.0',
+-    'Gcr-3',
++    'Gcr-4',
+     'PolkitAgent-1.0',
+     st_gir[0],
+ ]
+diff --git a/src/screensaver/backup-locker/event-grabber.c b/src/screensaver/backup-locker/event-grabber.c
+index 07acbf5..6dc7bac 100644
+--- a/src/screensaver/backup-locker/event-grabber.c
++++ b/src/screensaver/backup-locker/event-grabber.c
+@@ -28,7 +28,9 @@
+ #include <gdk/gdk.h>
+ #include <gdk/gdkx.h>
+ #include <gtk/gtk.h>
++#ifdef HAVE_XDO
+ #include <xdo.h>
++#endif
+ #include <X11/Xlib.h>
+ #include <X11/Xatom.h>
+ 
+@@ -51,7 +53,9 @@ typedef struct
+         GdkWindow *keyboard_grab_window;
+         GdkScreen *mouse_grab_screen;
+         GdkScreen *keyboard_grab_screen;
++#ifdef HAVE_XDO
+         xdo_t     *xdo;
++#endif
+ 
+         GtkWidget *invisible;
+ } CsEventGrabberPrivate;
+@@ -168,6 +172,7 @@ xorg_lock_smasher_set_active (CsEventGrabber  *grab,
+ static void
+ maybe_cancel_ui_grab (CsEventGrabber *grab)
+ {
++#ifdef HAVE_XDO
+     if (grab->priv->xdo == NULL)
+     {
+         return;
+@@ -175,6 +180,7 @@ maybe_cancel_ui_grab (CsEventGrabber *grab)
+ 
+     xdo_send_keysequence_window (grab->priv->xdo, CURRENTWINDOW, "Escape", 12000); // 12ms as suggested in xdo.h
+     xdo_send_keysequence_window (grab->priv->xdo, CURRENTWINDOW, "Escape", 12000);
++#endif
+ }
+ 
+ static int
+@@ -603,11 +609,13 @@ cs_event_grabber_init (CsEventGrabber *grab)
+ 
+         grab->priv->session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+ 
++#ifdef HAVE_XDO
+         grab->priv->xdo = xdo_new (NULL);
+         if (grab->priv->xdo == NULL)
+         {
+             g_warning ("Xdo context could not be created.");
+         }
++#endif
+ 
+         grab->priv->mouse_hide_cursor = FALSE;
+         grab->priv->invisible = gtk_invisible_new ();
+@@ -634,7 +642,9 @@ cs_event_grabber_finalize (GObject *object)
+ 
+         gtk_widget_destroy (grab->priv->invisible);
+ 
++#ifdef HAVE_XDO
+         xdo_free (grab->priv->xdo);
++#endif
+ 
+         G_OBJECT_CLASS (cs_event_grabber_parent_class)->finalize (object);
+ }
+diff --git a/src/screensaver/backup-locker/meson.build b/src/screensaver/backup-locker/meson.build
+index a76496b..989366c 100644
+--- a/src/screensaver/backup-locker/meson.build
++++ b/src/screensaver/backup-locker/meson.build
+@@ -19,7 +19,7 @@ executable(
+     ],
+     link_args: ['-fno-lto'],
+     include_directories: include_root,
+-    dependencies: [config_h, X11, xcomposite, xext, gtk, glib, gdkx11, xdo],
++    dependencies: [config_h, X11, xcomposite, xext, gtk, glib, gdkx11] + (xdo.found() ? [xdo] : []),
+     install: true,
+     install_dir: libexecdir,
+ )

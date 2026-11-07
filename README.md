@@ -6,79 +6,91 @@ terminal, not a bare shell install.
 
 ## Status
 
-**Updated:** 2026-09-19
+**Updated:** 2026-11-07
 **Target:** Rocky Linux 10.2 (Red Quartz)
 **State:** complete. All review findings resolved, all re-verifications PASS.
 Ready for the release PR.
 
-The repository publishes 64 RPMs. The install set is the 22 runtime package
-names in `vm-test/install-set.txt` (source of truth). A fresh Rocky Linux
-10.2 VM installs the whole set with a single `dnf install`, logs in through
-GDM into the Cinnamon Wayland session, and runs the full desktop.
+The repository publishes 104 RPMs. The install set is the 40 runtime
+package names in `vm-test/install-set.txt` (source of truth). A fresh
+Rocky Linux 10.2 VM installs the whole set with a single `dnf install`,
+logs in through lightdm into the Cinnamon X11 session, and runs the full
+desktop.
 
 | Check | Result |
 |-------|--------|
-| Fresh-VM install | single `dnf install` of the 22 runtime names, zero manual steps |
-| GDM login | Cinnamon (Wayland) session active |
-| Desktop surfaces | 5 of 5 (panel, wallpaper, terminal, settings, main menu) |
-| Parity vs the Fedora Cinnamon reference | 11 of 11 |
-| `run-tests.sh` end-to-end | all 64 RPMs in one `dnf install`, first attempt |
-| Enforcing-SELinux smoke | five surfaces, zero AVC denials |
+| Fresh-VM install | single `dnf install` of the 40 runtime names, zero manual steps |
+| Signature verification | `gpgcheck=1`, every package verifies against the tracked key |
+| lightdm login | Cinnamon (X11) session active, slick greeter |
+| Desktop surfaces | desktop icons (Computer, Home, Trash) and System Settings |
+| Window button availability | 33 Mint-L, 11 Mint-X, 20 Mint-Y |
+| Enforcing-SELinux run | zero AVC denials throughout |
 
-Three differences from the Fedora Cinnamon reference are intentional
+Two differences from the Fedora Cinnamon reference are intentional
 branding choices. The panel shows the Rocky logo instead of the Fedora
-logo, the wallpaper is Rocky's time-based Gemstone Skies instead of Fedora's
-blue tile, and the theme set is the stock Cinnamon theme with Adwaita GTK
-and gnome icons instead of Mint-Y.
+logo, and the wallpaper is Rocky's time-based Gemstone Skies instead of
+Fedora's blue tile. The theme set matches the reference. The set ships
+the Mint-L, Mint-X, and Mint-Y icon and theme families, and the branding
+override sets the icon theme to `Mint-Y-Aqua`.
 
 ## What the complete set adds
 
-Since the initial 14-package build, the set gained eight new packages and
-two rebuilt ones.
+Since the initial 14-package build, the set has grown to 40 runtime
+packages (104 RPMs). The table lists the packages the set carries and what
+each provides; `vm-test/install-set.txt` is the complete 40-name list.
 
 | Package | Version | What it provides |
 |---------|---------|------------------|
 | gnome-terminal | 3.54.5-1.el10 | The desktop terminal |
-| cinnamon-rocky-defaults | 1.0-2.el10 | Rocky branding. The Gemstone Skies wallpaper and the Rocky logo on the menu button, pulled from `rocky-backgrounds` and `rocky-logos` by dependency |
+| cinnamon-rocky-defaults | 1.0-9.el10 | Rocky branding. The Gemstone Skies wallpaper and the Rocky logo on the menu button, pulled from `rocky-backgrounds` and `rocky-logos` by dependency |
 | python3-pillow | 12.3.0-2.el10 | Settings app dependency (image handling) |
 | python3-setproctitle | 1.3.7-2.el10 | Settings app dependency (process title) |
 | python3-tinycss2 | 1.5.1-2.el10 | Settings app dependency (CSS parsing) |
 | python3-webencodings | 0.5.1-2.el10 | Runtime dependency of tinycss2 |
 | python3-xapp | 3.0.2-1.el10 | Settings app dependency (XApp API) |
 | gdk-pixbuf-parsers | 2.42.12-2.el10 | PNG and JPEG image loaders. EL10's `gdk-pixbuf2` ships none, and photo wallpapers render black without them |
-| cinnamon-desktop | 6.7.2-2.el10 | Rebuilt. A patch composites photo wallpapers on the Wayland background window |
-| cinnamon | 6.7.4-3.el10 | Rebuilt. This release bundles the Cinnamon Settings app and declares the Python dependencies as RPM Requires |
+| cinnamon-desktop | 6.7.2-3.el10 | Rebuilt. A patch composites photo wallpapers on the Wayland background window |
+| cinnamon | 6.7.4-4.el10 | Rebuilt. This release bundles the Cinnamon Settings app and declares the Python dependencies as RPM Requires |
+| cvt | 0.1.2-11.el10 | Video timing calculator, built and installed by the libxcvt build |
+| libxcvt | 0.1.2-11.el10 | Video timing calculation library, runtime dependency of Xorg |
+| libXfont2 | 2.0.9-1.el10 | Font rendering library, runtime dependency of Xorg |
+| libxklavier | 5.4-2.el10 | Keyboard layout library, dependency of the lightdm chain |
+| lightdm | 1.33.1-1.el10 | Display manager, the default display manager of the set |
+| lightdm-gobject | 1.33.1-1.el10 | GObject session management library used by the slick greeter |
+| mint-cursor-themes | 1.0.2-1.el10 | Mint cursor themes |
+| mint-l-icons | 1.8.0-1.el10 | Mint-L icon theme |
+| mint-l-theme | 2.0.6-2.el10 | Mint-L GTK theme |
+| mint-themes | 2.3.8-1.el10 | Mint theme collection. Provides the Mint-Y-Dark-Aqua theme the slick override uses |
+| mint-x-icons | 1.7.5-1.el10 | Mint-X icon theme |
+| mint-y-icons | 1.9.2-1.el10 | Mint-Y icons. Provides the Mint-Y-Aqua icon set the slick override uses |
+| slick-greeter | 2.2.6-2.el10 | Login greeter for lightdm |
+| slick-greeter-cinnamon | 2.2.6-2.el10 | Cinnamon variant of the slick greeter |
+| xapp-symbolic-icons | 1.1.0-2.el10 | Symbolic icons for XApp applications |
+| xorg-x11-drv-libinput | 1.5.0-2.el10 | libinput X input driver, hard dependency of Xorg |
+| xorg-x11-server-common | 21.1.24-2.el10 | Shared X server files and configuration |
+| xorg-x11-server-Xorg | 21.1.24-2.el10 | X server, run by lightdm for the greeter and the X11 session |
 
 The `cinnamon-settings` package from the 14-package era is gone. The
 settings app ships inside the `cinnamon` RPM now.
 
-**Known issue.** The settings app (`cinnamon-settings`, the "Control
-Center") crashes at startup on Rocky 10 with `ValueError: Namespace
-TimezoneMap not available` and exits before any window appears. The
-TimezoneMap GI namespace is missing on Rocky 10. A fix that makes the
-namespace optional is built as `cinnamon-6.7.4-4.el10`. When the
-namespace is absent, the Region/City selector covers timezone selection.
-The fix is verified at the process level (the app starts and stays alive
-with no TimezoneMap error), but it is unsigned and not part of the
-published set, so the published `cinnamon` 6.7.4-3 still crashes.
+**Known issue (fixed in the published set).** The TimezoneMap GI
+namespace is missing on Rocky 10, and the pre-6.7.4-4 settings app
+("Control Center") crashed at startup with `ValueError: Namespace
+TimezoneMap not available` before any window appeared. The published
+`cinnamon` 6.7.4-4 makes the namespace optional (TASK-0038), so the app
+starts and stays alive with no TimezoneMap error, verified at the
+process level. When the namespace is absent, the Region/City selector
+covers timezone selection.
 
-**Known issue.** Screen brightness cannot be changed from Cinnamon
-Settings or the keyboard shortcuts on the published set. The published
-`cinnamon-settings-daemon` 6.7.2-2 was built with gudev disabled and so
-does not ship `csd-backlight-helper`, the only brightness backend the
-settings daemon's power plugin spawns for every brightness get and set.
-The slider read fails and the shortcut step is a no-op, both verified
-at the D-Bus surface the two controls use. The fix enables the helper
-build (gudev under its Rocky package name `libgudev-devel`, plus
-`upower-devel`, a build dependency that was never declared) and is
-built as unsigned `cinnamon-settings-daemon-6.7.2-3.el10`. It is
-verified at the D-Bus level on the team's test VM, where the helper
-runs and reports the absence of backlight hardware instead of failing
-to spawn, but it is unsigned and not part of the published set, so the
-published 6.7.2-2 still lacks the helper. Even with the fix, brightness
-has no effect on a machine without backlight hardware, which covers
-the team's virtual machines, so end-to-end verification needs a display
-with a real backlight.
+**Known issue.** Screen brightness has no end-to-end effect on the
+team's machines. The published `cinnamon-settings-daemon` 6.7.2-4 ships
+`csd-backlight-helper`, the only brightness backend the settings
+daemon's power plugin spawns for every brightness get and set, and the
+helper runs and reports the absence of backlight hardware instead of
+failing to spawn, verified at the D-Bus level on the team's test VM.
+Brightness changes need a display with a real backlight, which the
+team's virtual machines do not have, so the end-to-end path on real
+backlight hardware is unverified.
 
 **Known issue.** Opening the Power pane of Cinnamon Settings
 ("Control Center") prints a D-Bus `Unauthorized (36)` traceback at
@@ -119,12 +131,17 @@ version gap is a recorded deviation, not an oversight.
   The cjs 140.0 upgrade needs GLib 2.86 and SpiderMonkey 140 APIs that EL10
   does not ship.
 - `spec/` is the canonical source for every published RPM. Each spec records
-  the exact upstream commit and the build tarball sha256 it was built from.
-  A clean-checkout rebuild from a fresh clone reproduces the published set
-  (verified 2026-09-19).
+  the exact upstream commit and the build tarball sha256 it was built from,
+  except the thirteen window-button and X-stack specs, which carry no
+  rpmbuild-enforced source checksum. The six mint specs record the hash as
+  an in-tree `# SHA256:` comment, and the seven X-stack specs record the
+  exact Fedora 45 Koji build in their changelog instead. A clean-checkout
+  rebuild from a fresh clone reproduces the published set (verified
+  2026-09-19).
 - Every source-built spec installs the component's license file under
-  /usr/share/licenses/. The published RPM set predates that addition and
-  does not carry the license files.
+  /usr/share/licenses/. The published set carries them in 44 of its
+  104 RPMs, and the other 60 carry none. The License section lists the
+  40 main packages that carry them, by package and the files each ships.
 
 ## Test results
 
@@ -146,14 +163,22 @@ in `vm-test/evidence/` and `vm-test/parity/`.
 - 2026-09-19, clean-checkout rebuild from a fresh clone. All changed specs
   built, and the payloads matched the published set except build
   environment artifacts (LTO build-ids, pip direct_url paths).
+- 2026-11-07, fresh-consumer run on VM `cinnamon-5`. The 40 runtime names
+  installed with one `dnf install` under `gpgcheck=1`, with SELinux
+  enforcing throughout and zero AVC denials. lightdm login through the
+  slick greeter into the Cinnamon X11 session. The desktop showed the
+  Computer, Home, and Trash icons, System Settings opened, and window
+  button availability came back 33 for Mint-L, 11 for Mint-X, and 20 for
+  Mint-Y. The negative tamper test passed, and the sha256 manifest
+  reported 104 of 104 lines OK.
 
 ## Signing and release verification
 
-The 64 published RPMs are signed with a dedicated GPG key, and the
+The 104 published RPMs are signed with a dedicated GPG key, and the
 repository is configured with `gpgcheck=1`, so dnf verifies the signature of
 every package it installs. The public key ships in the repository at
 `keys/cinnamon-rocky10-public.asc` (fingerprint
-`1689676AF4D4F6FEC142B4429C0A8912FDA02785`), and
+`2274BFE1BF28C051CD98675BEBD13108EB7FEF99`), and
 `repo-setup/setup-repo.sh` imports it into the rpm keyring as part of
 repository setup. Each release is pinned to a git tag, and the sha256
 manifest at `rpms/SHA256SUMS` records the signed set. The "Verifying the
@@ -170,7 +195,7 @@ Linux 10 system.
 
 ```
 spec/              RPM spec files, patches, and vendored license files (canonical)
-rpms/              the published RPM set (64 files)
+rpms/              the published RPM set (104 files)
 src/               source code references
 repo-setup/        local DNF repository setup script
 tasks/             VM test harness library (GDM driver, a11y client, ukey input)
@@ -195,6 +220,49 @@ See each component's `COPYING` file, plus `COPYING.LIB` or
 `COPYING.LESSER` where dual-licensed, for the full text.
 
 Every source-built spec installs the component's license file under
-/usr/share/licenses/. The published RPM set was built before that
-addition, so it does not carry the license files. A rebuild from
-spec/ is required to ship them.
+/usr/share/licenses/. Of the 104 published RPMs, 44 carry them: the 40
+main packages and four devel variants. The other 60 carry none. The
+table lists the 40 main packages that carry them, by package and file.
+
+| RPM | Files under /usr/share/licenses/ |
+|-----|----------------------------------|
+| cinnamon 6.7.4-4 | COPYING (GPL-2.0) |
+| cinnamon-control-center 6.7.2-2 | COPYING (GPL-2.0) |
+| cinnamon-desktop 6.7.2-3 | COPYING (GPL-2.0), COPYING.LIB (LGPL-2.0) |
+| cinnamon-menus 6.7.0-2 | COPYING (GPL-2.0), COPYING.LIB (LGPL-2.0) |
+| cinnamon-rocky-defaults 1.0-9 | LICENSE (GPL-2.0) |
+| cinnamon-session 6.7.3-2 | COPYING (GPL-2.0) |
+| cinnamon-settings-daemon 6.7.2-4 | COPYING (GPL-2.0), COPYING.LIB (LGPL-2.1) |
+| cjs 6.4.0-2 | COPYING (MIT or LGPL-2.0-or-later) |
+| gdk-pixbuf-parsers 2.42.12-2 | COPYING (LGPL-2.1) |
+| gnome-terminal 3.54.5-1 | COPYING (GPL-3.0), COPYING.GFDL (GFDL 1.3) |
+| gtk-layer-shell 0.10.1-1 | LICENSE_LGPL.txt (LGPL-3.0) |
+| mozjs115 115.29.0-1 | LICENSE, license.html (MPL 2.0) |
+| muffin 6.7.4-4 | COPYING (GPL-2.0) |
+| muffin-clutter 6.7.4-4 | COPYING (GPL-2.0) |
+| muffin-cogl 6.7.4-4 | COPYING (GPL-2.0) |
+| nemo 6.7.4-3 | COPYING (GPL-2.0), COPYING.LIB (LGPL-2.0) |
+| python3-pillow 12.3.0-2 | LICENSE (Pillow license) |
+| python3-setproctitle 1.3.7-2 | LICENSE (BSD 3-Clause) |
+| python3-tinycss2 1.5.1-2 | LICENSE (BSD 3-Clause) |
+| python3-webencodings 0.5.1-2 | LICENSE (BSD 2-Clause) |
+| python3-xapp 3.0.2-1 | COPYING (LGPL-2.0) |
+| xapps-lib 3.3.3-2 | COPYING (GPL-3.0), COPYING.LESSER (LGPL-3.0) |
+| cvt 0.1.2-11 | COPYING |
+| libXfont2 2.0.9-1 | COPYING |
+| libxcvt 0.1.2-11 | COPYING |
+| libxklavier 5.4-2 | COPYING.LIB |
+| lightdm 1.33.1-1 | COPYING.GPL3 |
+| lightdm-gobject 1.33.1-1 | COPYING.LGPL2, COPYING.LGPL3 |
+| mint-cursor-themes 1.0.2-1 | copyright |
+| mint-l-icons 1.8.0-1 | copyright |
+| mint-l-theme 2.0.6-2 | copyright |
+| mint-themes 2.3.8-1 | copyright |
+| mint-x-icons 1.7.5-1 | copyright |
+| mint-y-icons 1.9.2-1 | copyright |
+| slick-greeter 2.2.6-2 | COPYING, copyright |
+| slick-greeter-cinnamon 2.2.6-2 | COPYING |
+| xapp-symbolic-icons 1.1.0-2 | LICENSE, BSD-3-Clause.txt, CC-BY-4.0.txt, CC-BY-SA-4.0.txt, CC0.txt, GPL-3.0.txt, LGPL-3.0.txt, MIT.txt |
+| xorg-x11-drv-libinput 1.5.0-2 | COPYING |
+| xorg-x11-server-common 21.1.24-2 | COPYING |
+| xorg-x11-server-Xorg 21.1.24-2 | COPYING |

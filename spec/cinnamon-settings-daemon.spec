@@ -1,9 +1,9 @@
 Name:           cinnamon-settings-daemon
 Version:        6.7.2
-Release:        3.el10
+Release:        4.el10
 Summary:        Daemon handling Cinnamon settings
 
-License:        GPLv2+
+License:        GPLv2+ AND LGPL-2.1+
 URL:            https://github.com/linuxmint/cinnamon-settings-daemon
 Source0:        %{name}-%{version}.tar.gz
 # Source0 provenance (verified 2026-09-18 by full tree diff against upstream):
@@ -93,6 +93,11 @@ DESTDIR=%{buildroot} ninja -C builddir install
 %{_datadir}/polkit-1/actions/org.cinnamon.settings*.policy
 
 %changelog
+* Sun Nov 01 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-4
+- License field: GPLv2+ AND LGPL-2.1+ (was GPLv2+ only)
+- Rebuild from the tip spec so the package ships the license text declared
+  by %license (COPYING, COPYING.LIB)
+
 * Mon Oct 12 2026 Team Chaotix <chaotix@metallinux.dev> - 6.7.2-3
 - Build and ship csd-backlight-helper: enable gudev (libgudev-devel on
   Rocky, the RHEL name of the gudev-1.0 pkg-config the Fedora spec line

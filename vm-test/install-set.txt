@@ -1,12 +1,15 @@
 # Accepted Cinnamon install set — TASK-0017 (Big 3.1 acceptance, 2026-09-18).
 #
-# The 22 runtime package names installed by the single `dnf install` of the
-# 3.1 acceptance run on task0017-fresh-vm. Derived from the published rpms/
-# set by dropping -devel/-debuginfo/-debugsource subpackages:
+# The 40 runtime package names of the current published rpms/ set, derived
+# by dropping -devel/-debuginfo/-debugsource subpackages (24 at the
+# TASK-0017 3.1 acceptance run on task0017-fresh-vm, 2026-09-18; extended
+# by the five mint theme packages for TASK-0038 window-button theme
+# availability, 2026-11-02; extended by the eleven X server and lightdm
+# chain packages for the TASK-0038 X server port, 2026-11-03):
 #
 #   for f in rpms/*.rpm; do n=$(rpm -qp --qf '%{NAME}' "$f"); \
 #     case "$n" in *-devel|*-debuginfo|*-debugsource) ;; *) echo "$n";; esac; \
-#   done | sort -u
+#   done | LC_ALL=C sort -fu
 #
 # Consumed by vm-test/run-tests.sh (Phase 1 copies it to the VM, Phase 4
 # verifies against it). Regenerate after any rpms/ change that adds or drops
@@ -19,9 +22,21 @@ cinnamon-rocky-defaults
 cinnamon-session
 cinnamon-settings-daemon
 cjs
+cvt
 gdk-pixbuf-parsers
 gnome-terminal
 gtk-layer-shell
+libxcvt
+libXfont2
+libxklavier
+lightdm
+lightdm-gobject
+mint-cursor-themes
+mint-l-icons
+mint-l-theme
+mint-themes
+mint-x-icons
+mint-y-icons
 mozjs115
 muffin
 muffin-clutter
@@ -32,4 +47,10 @@ python3-setproctitle
 python3-tinycss2
 python3-webencodings
 python3-xapp
+slick-greeter
+slick-greeter-cinnamon
+xapp-symbolic-icons
 xapps-lib
+xorg-x11-drv-libinput
+xorg-x11-server-common
+xorg-x11-server-Xorg

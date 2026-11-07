@@ -303,12 +303,15 @@ test_error_handling() {
         record ".repo template exists" "FAIL" "file not found"
     fi
 
-    # Test 5: .repo template contains placeholder
-    log "Checking .repo template placeholder..."
-    if grep -q "BASEURL_PLACEHOLDER" "${PROJECT_DIR}/repo-setup/cinnamon-rocky10.repo"; then
-        record ".repo template has BASEURL_PLACEHOLDER" "PASS"
+    # Test 5: .repo template baseurl is a file:// URL (TASK-0038 item 9:
+    # the tree file is a reference copy of what setup-repo.sh writes,
+    # with the sample clone path rendered, so the old
+    # BASEURL_PLACEHOLDER assertion is retired)
+    log "Checking file:// baseurl in .repo template..."
+    if grep -q "^baseurl=file://" "${PROJECT_DIR}/repo-setup/cinnamon-rocky10.repo"; then
+        record ".repo template baseurl is file://" "PASS"
     else
-        record ".repo template has BASEURL_PLACEHOLDER" "FAIL"
+        record ".repo template baseurl is file://" "FAIL"
     fi
 
     # Test 6: .repo template has gpgcheck=1 (TASK-0024 item 5: the repo
@@ -660,18 +663,18 @@ test_vm_repo_setup() {
     local PKG_LIST=(
         "mozjs115|115.29.0-1.el10|SpiderMonkey JavaScript engine runtime"
         "mozjs115-devel|115.29.0-1.el10|mozjs115 headers and pkg-config"
-        "cjs|6.4.0-1.el10|GNOME JavaScript environment"
-        "muffin|6.7.4-3.el10|Cinnamon window manager compositor"
-        "muffin-clutter|6.7.4-3.el10|Muffin Clutter rendering library"
-        "muffin-cogl|6.7.4-3.el10|Muffin Cogl rendering library"
-        "cinnamon-desktop|6.7.2-2.el10|Desktop library and applet framework"
-        "xapps-lib|3.3.3-1.el10|Shared Cinnamon application libraries"
-        "cinnamon-session|6.7.3-1.el10|Session manager"
-        "cinnamon-settings-daemon|6.7.2-2.el10|Settings daemon"
-        "cinnamon-control-center|6.7.2-1.el10|Settings panel"
-        "cinnamon-menus|6.7.0-1.el10|Menu configuration"
-        "nemo|6.7.4-2.el10|File manager"
-        "cinnamon|6.7.4-3.el10|Cinnamon desktop shell"
+        "cjs|6.4.0-2.el10|GNOME JavaScript environment"
+        "muffin|6.7.4-4.el10|Cinnamon window manager compositor"
+        "muffin-clutter|6.7.4-4.el10|Muffin Clutter rendering library"
+        "muffin-cogl|6.7.4-4.el10|Muffin Cogl rendering library"
+        "cinnamon-desktop|6.7.2-3.el10|Desktop library and applet framework"
+        "xapps-lib|3.3.3-2.el10|Shared Cinnamon application libraries"
+        "cinnamon-session|6.7.3-2.el10|Session manager"
+        "cinnamon-settings-daemon|6.7.2-4.el10|Settings daemon"
+        "cinnamon-control-center|6.7.2-2.el10|Settings panel"
+        "cinnamon-menus|6.7.0-2.el10|Menu configuration"
+        "nemo|6.7.4-3.el10|File manager"
+        "cinnamon|6.7.4-4.el10|Cinnamon desktop shell"
     )
 
     local pkg_ok=0
