@@ -1,0 +1,340 @@
+# X.org requires lazy relocations to work.
+%undefine _hardened_build
+%undefine _strict_symbol_defs_build
+
+# Released ABI versions:
+%global ansic_major 0
+%global ansic_minor 4
+%global videodrv_major 25
+%global videodrv_minor 2
+%global xinput_major 24
+%global xinput_minor 4
+%global extension_major 10
+%global extension_minor 0
+
+%global pkgname xorg-server
+
+Summary:    X.Org X11 X server
+Name:       xorg-x11-server
+Version:    21.1.24
+Release:    2.el10
+URL:        http://www.x.org
+# SPDX
+License:    Adobe-Display-PostScript AND BSD-3-Clause AND DEC-3-Clause AND HPND AND HPND-sell-MIT-disclaimer-xserver AND HPND-sell-variant AND ICU AND ISC AND MIT AND MIT-open-group AND NTP AND SGI-B-2.0 AND SMLNJ AND X11 AND X11-distribute-modifications-variant
+
+Source0:    xorg-server-21.1.24.tar.xz
+
+Source10:   xserver.pamd
+# "useful" xvfb-run script
+Source20:   xvfb-run.sh
+# for requires generation in drivers
+Source30:   xserver-sdk-abi-requires
+# maintainer convenience script
+Source40:   driver-abi-rebuild.sh
+
+# From Debian use intel ddx driver only for gen4 and older chipsets
+Patch0:     06_use-intel-only-on-pre-gen4.diff
+# Default to xf86-video-modesetting on GeForce 8 and newer
+Patch1:     0001-xfree86-use-modesetting-driver-by-default-on-GeForce.patch
+# Default to va_gl on intel i965 as we use the modesetting drv there
+# va_gl should probably just be the default everywhere ?
+Patch2:     0001-xf86-dri2-Use-va_gl-as-vdpau_driver-for-Intel-i965-G.patch
+# because the display-managers are not ready yet, do not upstream
+Patch3:     0001-Fedora-hack-Make-the-suid-root-wrapper-always-start-.patch
+
+BuildRequires:  bison
+BuildRequires:  flex
+BuildRequires:  gawk
+BuildRequires:  gcc
+BuildRequires:  kernel-headers
+BuildRequires:  libXi-devel
+BuildRequires:  libXinerama-devel
+BuildRequires:  libXres-devel
+BuildRequires:  libXv-devel
+BuildRequires:  make
+BuildRequires:  mesa-libEGL-devel
+BuildRequires:  mesa-libGL-devel >= 9.2
+BuildRequires:  meson
+BuildRequires:  pkgconfig
+BuildRequires:  pkgconfig(audit)
+BuildRequires:  pkgconfig(bigreqsproto) >= 1.1.0
+BuildRequires:  pkgconfig(compositeproto) >= 0.4
+BuildRequires:  pkgconfig(damageproto) >= 1.1
+BuildRequires:  pkgconfig(dbus-1) >= 1.0
+BuildRequires:  pkgconfig(dri2proto) >= 2.8
+BuildRequires:  pkgconfig(dri3proto) >= 1.2
+BuildRequires:  pkgconfig(epoxy)
+BuildRequires:  pkgconfig(epoxy) >= 1.5.4
+BuildRequires:  pkgconfig(fixesproto) >= 6.0
+BuildRequires:  pkgconfig(fontsproto) >= 2.1.3
+BuildRequires:  pkgconfig(gbm) >= 10.2
+BuildRequires:  pkgconfig(inputproto) >= 2.3.99.1
+BuildRequires:  pkgconfig(kbproto) >= 1.0.3
+BuildRequires:  pkgconfig(libdrm) >= 2.4.89
+BuildRequires:  pkgconfig(libselinux) >= 2.0.86
+BuildRequires:  pkgconfig(libsystemd) >= 209
+BuildRequires:  pkgconfig(libudev) >= 143
+BuildRequires:  pkgconfig(libunwind)
+BuildRequires:  pkgconfig(libxcvt)
+BuildRequires:  pkgconfig(openssl)
+BuildRequires:  pkgconfig(pciaccess) >= 0.12.901
+BuildRequires:  pkgconfig(pixman-1)
+BuildRequires:  pkgconfig(randrproto) >= 1.6.0
+BuildRequires:  pkgconfig(recordproto) >= 1.13.99.1
+BuildRequires:  pkgconfig(renderproto) >= 0.11
+BuildRequires:  pkgconfig(resourceproto) >= 1.2.0
+BuildRequires:  pkgconfig(scrnsaverproto) >= 1.1
+BuildRequires:  pkgconfig(videoproto)
+BuildRequires:  pkgconfig(x11)
+BuildRequires:  pkgconfig(x11-xcb)
+BuildRequires:  pkgconfig(xau)
+BuildRequires:  pkgconfig(xcb-aux)
+BuildRequires:  pkgconfig(xcb-icccm)
+BuildRequires:  pkgconfig(xcb-image)
+BuildRequires:  pkgconfig(xcb-keysyms)
+BuildRequires:  pkgconfig(xcb-renderutil)
+BuildRequires:  pkgconfig(xcmiscproto) >= 1.2.0
+BuildRequires:  pkgconfig(xdmcp)
+BuildRequires:  pkgconfig(xext) >= 1.0.99.4
+BuildRequires:  pkgconfig(xextproto) >= 7.2.99.901
+BuildRequires:  pkgconfig(xf86bigfontproto) >= 1.2.0
+BuildRequires:  pkgconfig(xf86vidmodeproto) >= 2.2.99.1
+BuildRequires:  pkgconfig(xfont2) >= 2.0
+BuildRequires:  pkgconfig(xineramaproto)
+BuildRequires:  pkgconfig(xkbfile)
+BuildRequires:  pkgconfig(xproto) >= 7.0.31
+BuildRequires:  pkgconfig(xshmfence) >= 1.1
+BuildRequires:  pkgconfig(xtrans) >= 1.3.5
+BuildRequires:  pkgconfig(xtrans) >= 1.3.5
+BuildRequires:  systemtap-sdt-devel
+BuildRequires:  xorg-x11-util-macros >= 1.17
+BuildRequires:  xorg-x11-xtrans-devel >= 1.3.2
+
+%description
+X.Org X11 X server.
+
+
+%package        common
+Summary:        Xorg server common files
+Requires:       pixman
+Requires:       xkbcomp
+Requires:       xkeyboard-config
+
+%description    common
+Common files shared among all X servers.
+
+
+%package        Xorg
+Summary:        Xorg X server
+Requires:       libEGL
+Requires:       system-setup-keyboard
+Requires:       xorg-x11-drv-libinput
+Requires:       xorg-x11-server-common >= %{version}-%{release}
+Provides:       Xorg = %{version}-%{release}
+Provides:       Xserver
+# HdG: This should be moved to the wrapper package once the wrapper gets
+# its own sub-package:
+Provides:       xorg-x11-server-wrapper = %{version}-%{release}
+Provides:       xserver-abi(ansic-%{ansic_major}) = %{ansic_minor}
+Provides:       xserver-abi(videodrv-%{videodrv_major}) = %{videodrv_minor}
+Provides:       xserver-abi(xinput-%{xinput_major}) = %{xinput_minor}
+Provides:       xserver-abi(extension-%{extension_major}) = %{extension_minor}
+# Dropped from xorg-x11-server-21.1
+# https://gitlab.freedesktop.org/xorg/xserver/-/commit/b3b81c8c2090cd49410960a021baf0d27fdd2ab3
+Obsoletes:      xorg-x11-server-Xdmx < 1.20.15
+# Legacy fbdev devices have been replaced with simpledrm:
+# https://fedoraproject.org/wiki/Changes/ReplaceFbdevDrivers
+Obsoletes:      xorg-x11-drv-fbdev < 0.5.0-19
+Obsoletes:      xorg-x11-drv-vesa < 2.6.0-3
+Obsoletes:      xorg-x11-drv-armsoc < 1.4.1-10
+
+%description    Xorg
+X.org X11 is an open source implementation of the X Window System. It provides
+the basic low level functionality which full fledged graphical user interfaces
+(GUIs) such as GNOME and KDE are designed upon.
+
+
+%package        devel
+Summary:        SDK for X server driver module development
+Requires:       libpciaccess-devel
+Requires:       libXfont2-devel
+Requires:       xorg-x11-proto-devel
+Requires:       xorg-x11-util-macros
+Requires:       pixman-devel
+Requires:       pkgconfig
+Provides:       xorg-x11-server-static
+
+%description devel
+The SDK package provides the developmental files which are necessary for
+developing X server driver modules, and for compiling driver modules outside of
+the standard X11 source code tree. Developers writing video drivers, input
+drivers, or other X modules should install this package.
+
+
+
+%prep
+%autosetup -p1 -n %{pkgname}-%{version}
+
+# check the ABI in the source against what we expect.
+getmajor() {
+    grep -i ^#define.ABI.$1_VERSION hw/xfree86/common/xf86Module.h |
+    tr '(),' '   ' | awk '{ print $4 }'
+}
+
+getminor() {
+    grep -i ^#define.ABI.$1_VERSION hw/xfree86/common/xf86Module.h |
+    tr '(),' '   ' | awk '{ print $5 }'
+}
+
+test `getmajor ansic` == %{ansic_major}
+test `getminor ansic` == %{ansic_minor}
+test `getmajor videodrv` == %{videodrv_major}
+test `getminor videodrv` == %{videodrv_minor}
+test `getmajor xinput` == %{xinput_major}
+test `getminor xinput` == %{xinput_minor}
+test `getmajor extension` == %{extension_major}
+test `getminor extension` == %{extension_minor}
+
+%build
+%meson \
+    -D agp=auto \
+    -D builder_string="Build ID: %{name} %{version}-%{release}" \
+    -D default_font_path="catalogue:/etc/X11/fontpath.d,built-ins" \
+    -D devel-docs=false \
+    -D dga=true \
+    -D docs-pdf=false \
+    -D docs=false \
+    -D dpms=true \
+    -D dri1=false \
+    -D dri2=true \
+    -D dri3=true \
+    -D drm=true \
+    -D dtrace=false \
+    -D fallback_input_driver=libinput \
+    -D glamor=true \
+    -D glx=true \
+    -D hal=false \
+    -D input_thread=true \
+    -D int10=false \
+    -D ipv6=true \
+    -D libunwind=true \
+    -D linux_acpi=false \
+    -D linux_apm=false \
+    -D listen_local=true \
+    -D listen_tcp=false \
+    -D listen_unix=true \
+    -D log_dir="%{_localstatedir}/log" \
+    -D mitshm=auto \
+    -D module_dir="%{_libdir}/xorg/modules" \
+    -D pciaccess=true \
+    -D screensaver=true \
+    -D secure-rpc=false \
+    -D sha1=libcrypto \
+    -D suid_wrapper=true \
+    -D systemd_logind=true \
+    -D udev_kms=true \
+    -D udev=true \
+    -D vgahw=true \
+    -D xace=true \
+    -D xcsecurity=true \
+    -D xdm-auth-1=true \
+    -D xdmcp=true \
+    -D xephyr=false \
+    -D xf86bigfont=false \
+    -D xf86-input-inputtest=true \
+    -D xinerama=true \
+    -D xkb_output_dir="%{_localstatedir}/lib/xkb" \
+    -D xnest=false \
+    -D xorg=true \
+    -D xpbproxy=false \
+    -D xquartz=false \
+    -D xres=true \
+    -D xselinux=true \
+    -D xvfb=false \
+    -D xvmc=true \
+    -D xv=true \
+    -D xwin=false
+
+%meson_build
+
+%install
+%meson_install
+
+install -D -m 0644 -p xkb/README.compiled %{buildroot}%{_localstatedir}/lib/xkb/README.compiled
+install -D -m 0644 %{SOURCE10} %{buildroot}%{_sysconfdir}/pam.d/xserver
+
+# make sure the (empty) /etc/X11/xorg.conf.d is there, system-setup-keyboard
+# relies on it more or less.
+mkdir -p %{buildroot}%{_sysconfdir}/X11/xorg.conf.d
+
+install -D -m 0755 %{SOURCE30} %{buildroot}%{_bindir}/xserver-sdk-abi-requires
+
+
+%files common
+%license COPYING
+%{_mandir}/man1/Xserver.1*
+%{_libdir}/xorg/protocol.txt
+%dir %{_localstatedir}/lib/xkb
+%{_localstatedir}/lib/xkb/README.compiled
+
+%files Xorg
+%license COPYING
+%config %attr(0644,root,root) %{_sysconfdir}/pam.d/xserver
+%{_bindir}/gtf
+%{_bindir}/X
+%{_bindir}/Xorg
+%{_libexecdir}/Xorg
+# Disable until module loading is audited
+# %attr(0711,root,root) %caps(cap_sys_admin,cap_sys_rawio,cap_dac_override=pe)
+%attr(4755, root, root) %{_libexecdir}/Xorg.wrap
+%dir %{_libdir}/xorg
+%dir %{_libdir}/xorg/modules
+%dir %{_libdir}/xorg/modules/drivers
+%{_libdir}/xorg/modules/drivers/modesetting_drv.so
+%dir %{_libdir}/xorg/modules/extensions
+%{_libdir}/xorg/modules/extensions/libglx.so
+%dir %{_libdir}/xorg/modules/input
+%{_libdir}/xorg/modules/input/inputtest_drv.so
+%{_libdir}/xorg/modules/libexa.so
+%{_libdir}/xorg/modules/libfbdevhw.so
+#%%{_libdir}/xorg/modules/libfb.so
+%{_libdir}/xorg/modules/libglamoregl.so
+%{_libdir}/xorg/modules/libshadow.so
+%{_libdir}/xorg/modules/libshadowfb.so
+%{_libdir}/xorg/modules/libvgahw.so
+%{_libdir}/xorg/modules/libwfb.so
+%{_mandir}/man1/gtf.1*
+%{_mandir}/man1/Xorg.1*
+%{_mandir}/man1/Xorg.wrap.1*
+%{_mandir}/man4/exa.4*
+%{_mandir}/man4/fbdevhw.4*
+%{_mandir}/man4/inputtestdrv.4*
+%{_mandir}/man4/modesetting.4*
+%{_mandir}/man5/xorg.conf.5*
+%{_mandir}/man5/xorg.conf.d.5*
+%{_mandir}/man5/Xwrapper.config.5*
+%dir %{_sysconfdir}/X11/xorg.conf.d
+%dir %{_datadir}/X11/xorg.conf.d
+%{_datadir}/X11/xorg.conf.d/10-quirks.conf
+
+%files devel
+%license COPYING
+%{_bindir}/xserver-sdk-abi-requires
+%{_libdir}/pkgconfig/xorg-server.pc
+%dir %{_includedir}/xorg
+%{_includedir}/xorg/*.h
+%{_datadir}/aclocal/xorg-server.m4
+
+
+%changelog
+* Sat Nov 07 2026 Team Chaotix <chaotix@metallinux.dev> - 21.1.24-2.el10
+- Ship the tarball COPYING (X.O standard copyright, MIT variant) as
+  %%license in the Xorg, common, and devel subpackages; the common and
+  devel copies move from %doc to %%license so the text lands in
+  /usr/share/licenses/.
+* Tue Nov 03 2026 Team Chaotix <chaotix@metallinux.dev> - 21.1.24-1.el10
+- Rocky Linux 10 port of xorg-x11-server 21.1.24-2.fc45 (Fedora 45, koji
+  build 3059267, spec ref d0f378762ad37261c3f52870f13cd3ca500adb84).
+  Publishes the Xorg, common, and devel subpackages only; the Xnest,
+  Xvfb, and Xephyr servers are disabled via their meson options and the
+  xorg-x11-server-source subpackage is not installed.
